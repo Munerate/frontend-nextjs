@@ -4,7 +4,7 @@ import { getSupabaseServer } from "@/lib/supabase/server";
 // import VerifyPanel from "@/components/VerifyPanel"; // verify step disabled for now
 import MuneratePanel from "@/components/MuneratePanel";
 import AskPanel from "@/components/AskPanel";
-import HitsChart from "@/components/HitsChart";
+import AnalyticsPanel from "@/components/AnalyticsPanel";
 import MiddlewarePanel from "@/components/MiddlewarePanel";
 import RefreshButton from "@/components/RefreshButton";
 
@@ -16,17 +16,9 @@ type EventRow = {
   bot_name: string | null;
   provider: string | null;
   path: string | null;
+  referrer: string | null;
   blocked: boolean;
 };
-
-function topCounts(rows: EventRow[], key: keyof EventRow, limit = 5) {
-  const m = new Map<string, number>();
-  for (const r of rows) {
-    const v = r[key];
-    if (typeof v === "string" && v) m.set(v, (m.get(v) ?? 0) + 1);
-  }
-  return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
-}
 
 export default async function SitePage({ params }: PageProps<"/sites/[id]">) {
   const { id } = await params;
@@ -46,25 +38,11 @@ export default async function SitePage({ params }: PageProps<"/sites/[id]">) {
 
   const { data: events } = await supabase
     .from("events")
-    .select("ts, category, bot_name, provider, path, blocked")
+    .select("ts, category, bot_name, provider, path, referrer, blocked")
     .eq("site_id", id)
     .order("ts", { ascending: false })
     .limit(5000);
   const rows = (events ?? []) as EventRow[];
-
-  // hits per day (last 14 days)
-  const byDay = new Map<string, number>();
-  for (const r of rows) {
-    const day = r.ts.slice(0, 10);
-    byDay.set(day, (byDay.get(day) ?? 0) + 1);
-  }
-  const series = [...byDay.entries()].sort().slice(-14);
-
-  const byCategory = topCounts(rows, "category", 10);
-  const topBots = topCounts(rows, "bot_name");
-  const topProviders = topCounts(rows, "provider");
-  const topPaths = topCounts(rows, "path");
-  const blockedScans = rows.filter((r) => r.blocked && r.category === "vuln_scan").length;
 
   return (
     <div className="flex flex-col gap-8">
@@ -83,11 +61,6 @@ export default async function SitePage({ params }: PageProps<"/sites/[id]">) {
           <div className="mb-3 flex items-center justify-between">
             <div>
               <h2 className="font-medium text-text-h">Analytics</h2>
-              {rows.length > 0 && (
-                <p className="mt-0.5 text-sm text-text">
-                  {rows.length} recent events · {blockedScans} blocked vuln-scans
-                </p>
-              )}
             </div>
             <RefreshButton />
           </div>
@@ -102,15 +75,7 @@ export default async function SitePage({ params }: PageProps<"/sites/[id]">) {
               </p>
             </div>
           ) : (
-            <div className="flex flex-col gap-6">
-              <HitsChart data={series} />
-              <div className="grid grid-cols-2 gap-6">
-                <Counts title="By category" data={byCategory} />
-                <Counts title="Top bots" data={topBots} />
-                <Counts title="Top providers" data={topProviders} />
-                <Counts title="Top paths" data={topPaths} />
-              </div>
-            </div>
+            <AnalyticsPanel events={rows} />
           )}
         </section>
 
@@ -134,23 +99,6 @@ export default async function SitePage({ params }: PageProps<"/sites/[id]">) {
           {/* <AskPanel siteId={site.id} /> */}
         </section>
       </div>
-    </div>
-  );
-}
-
-function Counts({ title, data }: { title: string; data: [string, number][] }) {
-  return (
-    <div className="rounded-lg border border-border p-4">
-      <h3 className="mb-2 text-sm font-medium text-text-h">{title}</h3>
-      {data.length === 0 && <p className="text-sm text-text">No data yet.</p>}
-      <ul className="flex flex-col gap-1">
-        {data.map(([label, n]) => (
-          <li key={label} className="flex justify-between text-sm">
-            <span className="truncate text-text-h">{label}</span>
-            <span className="ml-2 text-text">{n}</span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
