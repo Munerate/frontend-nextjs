@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 import { addDomain, createSiteForCurrentUser } from "./actions";
 
 export default async function NewSitePage({
@@ -12,8 +11,9 @@ export default async function NewSitePage({
   if (typeof domain === "string" && domain && !error) {
     const result = await createSiteForCurrentUser(domain);
     if ("id" in result) {
-      // Refresh the dashboard layout so the sidebar picks up the new site.
-      revalidatePath("/", "layout");
+      // The dashboard layout reads cookies (auth.getUser) so it's dynamic and
+      // re-fetches the sidebar sites on this navigation — no revalidate needed.
+      // (revalidatePath is illegal during render; calling it here crashed the page.)
       redirect(`/sites/${result.id}`);
     }
     redirect(`/sites/new?error=${encodeURIComponent(result.error)}`);
