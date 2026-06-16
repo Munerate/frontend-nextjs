@@ -13,7 +13,13 @@ export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string | null>(() => {
+    const err = params.get("error");
+    if (!err) return null;
+    return err === "missing_code"
+      ? "Confirmation link was invalid or expired. Try signing in or sign up again."
+      : err;
+  });
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,15 +29,20 @@ export default function LoginForm() {
     const { error } =
       mode === "signin"
         ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
+        : await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+            },
+          });
     setBusy(false);
     if (error) {
       setMsg(error.message);
       return;
     }
     if (mode === "signup") {
-      setMsg("Account created. If email confirmation is on, check your inbox, then sign in.");
-      setMode("signin");
+      setMsg("Account created. Check your inbox and click the confirmation link — it'll sign you in and pick up where you left off.");
       return;
     }
     router.replace(next);
