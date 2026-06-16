@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { addDomain, createSiteForCurrentUser } from "./actions";
 
 export default async function NewSitePage({
@@ -10,7 +11,11 @@ export default async function NewSitePage({
   // the site immediately and drop the user straight onto its dashboard.
   if (typeof domain === "string" && domain && !error) {
     const result = await createSiteForCurrentUser(domain);
-    if ("id" in result) redirect(`/sites/${result.id}`);
+    if ("id" in result) {
+      // Refresh the dashboard layout so the sidebar picks up the new site.
+      revalidatePath("/", "layout");
+      redirect(`/sites/${result.id}`);
+    }
     redirect(`/sites/new?error=${encodeURIComponent(result.error)}`);
   }
 
