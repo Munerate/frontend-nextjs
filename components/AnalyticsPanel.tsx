@@ -15,7 +15,6 @@ export type SlimEvent = {
 const TIMEFRAMES = [
   { key: "24h", label: "24H", days: 1 },
   { key: "7d", label: "7D", days: 7 },
-  { key: "14d", label: "14D", days: 14 },
   { key: "30d", label: "30D", days: 30 },
   { key: "all", label: "All", days: Infinity },
 ] as const;
@@ -44,7 +43,7 @@ function bucketLabel(date: Date, hourly: boolean) {
 }
 
 export default function AnalyticsPanel({ events }: { events: SlimEvent[] }) {
-  const [timeframe, setTimeframe] = useState<TimeframeKey>("14d");
+  const [timeframe, setTimeframe] = useState<TimeframeKey>("24h");
   // Capture "now" once on mount so the cutoff is stable across re-renders.
   const [now] = useState(() => Date.now());
 
@@ -325,10 +324,17 @@ function AreaChart({
         const line = smoothPath(pts);
         const area = `${line} L ${pts[pts.length - 1].x} ${H} L ${pts[0].x} ${H} Z`;
         const c = colorFor(bot);
+        // With a single bucket the line/area has no width — show dots so the
+        // data is still visible.
+        const showDots = pts.length <= 2;
         return (
           <g key={bot}>
             <path d={area} fill={`url(#${uid}-g${i})`} />
             <path d={line} fill="none" stroke={c} strokeWidth={1.75} strokeLinejoin="round" />
+            {showDots &&
+              pts.map((p, j) => (
+                <circle key={j} cx={p.x} cy={p.y} r={3} fill={c} />
+              ))}
           </g>
         );
       })}
