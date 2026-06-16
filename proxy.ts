@@ -31,7 +31,9 @@ export async function proxy(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const isAuthPage = path === "/login";
-  const isPublicPage = path === "/" || isAuthPage;
+  // /auth/callback must stay public: the user isn't authenticated until it
+  // exchanges the code, so guarding it would bounce them to /login forever.
+  const isPublicPage = path === "/" || path === "/auth/callback" || isAuthPage;
 
   if (!user && !isPublicPage) {
     const url = request.nextUrl.clone();
