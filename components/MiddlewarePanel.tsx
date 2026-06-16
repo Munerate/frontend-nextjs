@@ -4,8 +4,15 @@ import { useState } from "react";
 import CodeBlock from "./CodeBlock";
 import { middlewareSnippets } from "@/lib/middleware-snippet";
 
-export default function MiddlewarePanel({ tag }: { tag: string; origin?: string }) {
-  const snippets = middlewareSnippets(tag);
+export default function MiddlewarePanel({
+  siteId,
+  tag,
+}: {
+  siteId: string;
+  tag: string;
+  origin?: string;
+}) {
+  const snippets = middlewareSnippets(siteId, tag);
   const [active, setActive] = useState(snippets[0].id);
   const snippet = snippets.find((s) => s.id === active) ?? snippets[0];
 

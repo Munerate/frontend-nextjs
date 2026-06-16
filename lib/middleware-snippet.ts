@@ -23,18 +23,18 @@ export type FrameworkSnippet = {
   code: string;
 };
 
-function configBlock(tag: string): string {
+function configBlock(siteId: string, tag: string): string {
   return `const botIdConfig = {
-  siteId: '${tag}',
+  siteId: '${siteId}',
   apiEndpoint: '${INGEST_ORIGIN}/api/detect',
   siteTag: '${tag}',
 };`;
 }
 
-function edgeSnippet(tag: string): string {
+function edgeSnippet(siteId: string, tag: string): string {
   return `import { detectBot, isVulnScan, buildPayload, sendDetectEvent } from '@munerate/bot-id';
 
-${configBlock(tag)}
+${configBlock(siteId, tag)}
 
 // Edge middleware for any framework on platforms like Vercel, AWS Amplify,
 // Netlify, or self-hosted. Return a Response to block, or nothing to pass through.
@@ -62,10 +62,10 @@ export const config = {
 };`;
 }
 
-function cloudflareSnippet(tag: string): string {
+function cloudflareSnippet(siteId: string, tag: string): string {
   return `import { detectBot, isVulnScan, buildPayload, sendDetectEvent } from '@munerate/bot-id';
 
-${configBlock(tag)}
+${configBlock(siteId, tag)}
 
 export default {
   async fetch(request: Request, _env: unknown, ctx: ExecutionContext): Promise<Response> {
@@ -85,7 +85,7 @@ export default {
 };`;
 }
 
-export function middlewareSnippets(tag: string): FrameworkSnippet[] {
+export function middlewareSnippets(siteId: string, tag: string): FrameworkSnippet[] {
   return [
     {
       id: "next",
@@ -93,7 +93,7 @@ export function middlewareSnippets(tag: string): FrameworkSnippet[] {
       description: "Server-side bot detection for Vercel, AWS Amplify, Netlify, self-hosted",
       install: "npm install @munerate/bot-id",
       filename: "middleware.ts",
-      code: edgeSnippet(tag),
+      code: edgeSnippet(siteId, tag),
     },
     {
       id: "cloudflare",
@@ -101,12 +101,12 @@ export function middlewareSnippets(tag: string): FrameworkSnippet[] {
       description: "Server-side bot detection at the Cloudflare edge",
       install: "npm install @munerate/bot-id",
       filename: "worker.ts",
-      code: cloudflareSnippet(tag),
+      code: cloudflareSnippet(siteId, tag),
     },
   ];
 }
 
 // Back-compat single-snippet helper (defaults to the edge middleware).
-export function middlewareSnippet(tag: string, _origin?: string): string {
-  return edgeSnippet(tag);
+export function middlewareSnippet(siteId: string, tag: string, _origin?: string): string {
+  return edgeSnippet(siteId, tag);
 }

@@ -115,7 +115,7 @@ export default async function SitePage({ params }: PageProps<"/sites/[id]">) {
         </section>
 
         <aside className="rounded-xl border border-border bg-accent-bg/20 p-6 lg:self-start">
-          <MiddlewarePanel tag={site.site_tag} origin={origin} />
+          <MiddlewarePanel siteId={site.id} tag={site.site_tag} origin={origin} />
         </aside>
       </div>
 
