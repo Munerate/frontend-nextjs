@@ -33,7 +33,12 @@ export async function proxy(request: NextRequest) {
   const isAuthPage = path === "/login";
   // /auth/callback must stay public: the user isn't authenticated until it
   // exchanges the code, so guarding it would bounce them to /login forever.
-  const isPublicPage = path === "/" || path === "/auth/callback" || isAuthPage;
+  // /demo/* is the public, read-only demo view — never bounce it to /login.
+  const isPublicPage =
+    path === "/" ||
+    path === "/auth/callback" ||
+    isAuthPage ||
+    path.startsWith("/demo");
 
   if (!user && !isPublicPage) {
     const url = request.nextUrl.clone();

@@ -10,6 +10,11 @@ import RefreshButton from "@/components/RefreshButton";
 
 export const runtime = "nodejs";
 
+// function maskTag(tag: string): string {
+//   if (tag.length <= 10) return tag;
+//   return `${tag.slice(0, 6)}${"•".repeat(tag.length - 10)}${tag.slice(-4)}`;
+// }
+
 type EventRow = {
   ts: string;
   category: string;
@@ -47,7 +52,16 @@ export default async function SitePage({ params }: PageProps<"/sites/[id]">) {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-2xl font-semibold text-text-h">{site.domain}</h1>
+        <div className="flex items-center gap-3">
+            <img
+              src={`https://favicon.im/${site.domain}`}
+              alt={`${site.domain} favicon`}
+              width={24}
+              height={24}
+              className="h-6 w-6 shrink-0 rounded-sm"
+            />
+            <h1 className="text-2xl font-semibold text-text-h">{site.domain}</h1>
+          </div>
         <p className="mt-1 text-sm text-text">
           Site tag: <span className="font-mono text-text-h">{site.site_tag}</span>
         </p>

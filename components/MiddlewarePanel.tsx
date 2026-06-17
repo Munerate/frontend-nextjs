@@ -29,7 +29,7 @@ export default function MiddlewarePanel({
   return (
     <section>
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="font-medium text-text-h">Install the detector</h2>
+        <h2 className="font-medium text-text-h">Install the Middleware</h2>
         <button
           onClick={download}
           className="flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white"
@@ -37,7 +37,6 @@ export default function MiddlewarePanel({
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16" />
           </svg>
-          Download {snippet.filename}
         </button>
       </div>
 
@@ -60,7 +59,7 @@ export default function MiddlewarePanel({
 
       <p className="mb-2 text-sm text-text">
         {snippet.description}. Install <code className="font-mono">@munerate/bot-id</code>, then add
-        the detector:
+        the middleware:
       </p>
       <CodeBlock code={snippet.install} lang="bash" />
       <CodeBlock code={snippet.code} lang="ts" />
