@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Brand from "@/components/Brand";
 import LandingHero from "@/components/LandingHero";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
@@ -30,7 +31,7 @@ export default async function Home() {
     <main className="flex flex-1 flex-col">
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-5 sm:px-10">
-        <span className="text-lg font-semibold text-text-h">Munerate</span>
+        <Brand href="/" />
         {user ? (
           <Link href="/sites" className="text-sm font-medium text-accent">
             Dashboard
@@ -45,19 +46,19 @@ export default async function Home() {
       {/* Hero */}
       <section className="flex flex-col items-center px-6 py-20 text-center sm:py-28">
         <span className="rounded-full border border-accent-border bg-accent-bg px-3 py-1 text-xs font-medium text-accent">
-          Get paid when AI reads your content
+          Free AI-readiness scan
         </span>
         <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-text-h sm:text-5xl">
-          See how much AI is scraping your site — and start charging for it.
+          Scan your site to see how AI-ready it is — then get paid when agents read it.
         </h1>
         <p className="mt-5 max-w-xl text-base text-text sm:text-lg">
-          Munerate shows you how much of your content is being harvested by AI
-          crawlers, estimates what it&apos;s worth, and lets you move it behind a
-          paywall so the bots pay you instead.
+          Munerate scans your site for AI-agent readability, shows you which crawlers are
+          harvesting your content, and lets you move it behind a paywall so the bots pay
+          you instead.
         </p>
         <LandingHero />
         <p className="mt-3 text-xs text-text">
-          Enter your domain to get started — it takes a minute.
+          Enter your domain to scan it free — no signup required.
         </p>
       </section>
 
@@ -85,7 +86,7 @@ export default async function Home() {
           Stop giving your content away for free.
         </h2>
         <p className="mx-auto mt-3 max-w-md text-sm text-text">
-          Add your domain, install the middleware, and turn AI scraping into revenue.
+          Scan your domain, install the middleware, and turn AI scraping into revenue.
         </p>
         <div className="mt-8 flex flex-col items-center">
           <LandingHero />

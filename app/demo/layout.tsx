@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Brand from "@/components/Brand";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -18,15 +19,7 @@ export default async function DemoLayout({
   return (
     <div className="flex flex-1">
       <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-accent-bg/30 px-3 py-5">
-        <Link
-          href="/"
-          className="mb-6 flex items-center gap-2 px-2 text-lg font-semibold text-text-h"
-        >
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-sm font-bold text-white">
-            M
-          </span>
-          Munerate
-        </Link>
+        <Brand href="/" className="mb-6 px-2" />
 
         <div className="mt-6 mb-1.5 px-2.5 text-xs font-semibold uppercase tracking-wider text-text">
           Sites

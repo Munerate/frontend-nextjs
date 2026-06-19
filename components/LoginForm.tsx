@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import Brand from "@/components/Brand";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -52,7 +53,7 @@ export default function LoginForm() {
   return (
     <main className="flex flex-1 items-center justify-center p-6">
       <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-semibold text-text-h">Munerate</h1>
+        <Brand size="lg" />
         <p className="mt-1 mb-6 text-sm text-text">
           {mode === "signin" ? "Sign in to your dashboard." : "Create an account."}
         </p>

@@ -34,11 +34,13 @@ export async function proxy(request: NextRequest) {
   // /auth/callback must stay public: the user isn't authenticated until it
   // exchanges the code, so guarding it would bounce them to /login forever.
   // /demo/* is the public, read-only demo view — never bounce it to /login.
+  // /scan is the public agent-readiness funnel — must render for logged-out visitors.
   const isPublicPage =
     path === "/" ||
     path === "/auth/callback" ||
     isAuthPage ||
-    path.startsWith("/demo");
+    path.startsWith("/demo") ||
+    path.startsWith("/scan");
 
   if (!user && !isPublicPage) {
     const url = request.nextUrl.clone();
@@ -60,6 +62,6 @@ export async function proxy(request: NextRequest) {
 // Guard everything except static assets, the public detect endpoint, and SKILL.md.
 export const config = {
   matcher: [
-    "/((?!api/detect|_next/static|_next/image|favicon.ico|SKILL.md|.*\\.svg).*)",
+    "/((?!api/detect|api/scan|_next/static|_next/image|favicon.ico|SKILL.md|.*\\.svg).*)",
   ],
 };

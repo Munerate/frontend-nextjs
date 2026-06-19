@@ -10,8 +10,7 @@ export default function LandingHero() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const clean = domain.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-    const next = `/sites/new${clean ? `?domain=${encodeURIComponent(clean)}` : ""}`;
-    router.push(`/login?next=${encodeURIComponent(next)}`);
+    router.push(`/scan${clean ? `?domain=${encodeURIComponent(clean)}` : ""}`);
   }
 
   return (
@@ -28,7 +27,7 @@ export default function LandingHero() {
         type="submit"
         className="rounded-md bg-accent px-5 py-2.5 text-sm font-medium text-white whitespace-nowrap"
       >
-        Munerate
+        Scan
       </button>
     </form>
   );
