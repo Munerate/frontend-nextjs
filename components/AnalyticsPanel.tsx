@@ -43,7 +43,7 @@ function bucketLabel(date: Date, hourly: boolean) {
 }
 
 export default function AnalyticsPanel({ events }: { events: SlimEvent[] }) {
-  const [timeframe, setTimeframe] = useState<TimeframeKey>("24h");
+  const [timeframe, setTimeframe] = useState<TimeframeKey>("all");
   // Capture "now" once on mount so the cutoff is stable across re-renders.
   const [now] = useState(() => Date.now());
 
