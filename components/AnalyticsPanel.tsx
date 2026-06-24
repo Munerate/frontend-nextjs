@@ -1,55 +1,52 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
+import {
+  bucketLabel,
+  CATEGORY_TONE,
+  cutoffFor,
+  OTHER_COLOR,
+  PALETTE,
+  pct,
+  smoothPath,
+  timeframeFor,
+  timeLabel,
+  TIMEFRAMES,
+  topCounts,
+  topReferrerCounts,
+  type SlimEvent,
+  type TimeframeKey,
+} from "@/lib/analytics";
 
-export type SlimEvent = {
-  ts: string;
-  category: string;
-  bot_name: string | null;
-  provider: string | null;
-  path: string | null;
-  referrer: string | null;
-  blocked: boolean;
-};
+// Re-exported for back-compat: external code historically imported SlimEvent
+// from this module.
+export type { SlimEvent };
 
-const TIMEFRAMES = [
-  { key: "24h", label: "24H", days: 1 },
-  { key: "7d", label: "7D", days: 7 },
-  { key: "30d", label: "30D", days: 30 },
-  { key: "all", label: "All", days: Infinity },
-] as const;
-
-type TimeframeKey = (typeof TIMEFRAMES)[number]["key"];
-
-// Muted, desaturated palette — premium and easy on the eye. The first colour is
-// the luxury accent (emerald) reserved for the most active bot / data line.
-const PALETTE = [
-  "#34d399", // emerald accent
-  "#60a5fa", // soft blue
-  "#a78bfa", // muted violet
-  "#f0abfc", // dusty pink
-  "#fbbf24", // soft amber
-  "#5eead4", // pale teal
-];
-const OTHER_COLOR = "#64748b"; // slate
 const MAX_BOTS = 6;
 
-function bucketLabel(date: Date, hourly: boolean) {
-  if (hourly) return `${String(date.getHours()).padStart(2, "0")}:00`;
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
-export default function AnalyticsPanel({ events }: { events: SlimEvent[] }) {
-  const [timeframe, setTimeframe] = useState<TimeframeKey>("all");
+export default function AnalyticsPanel({
+  events,
+  timeframe: controlledTimeframe,
+  onTimeframeChange,
+  hideTimeframeSelector = false,
+}: {
+  events: SlimEvent[];
+  /** Controlled timeframe (e.g. shared with the landing hero). Falls back to
+   *  internal state when omitted, so existing call sites are unaffected. */
+  timeframe?: TimeframeKey;
+  onTimeframeChange?: (v: TimeframeKey) => void;
+  hideTimeframeSelector?: boolean;
+}) {
+  const [internalTimeframe, setInternalTimeframe] = useState<TimeframeKey>("all");
+  const timeframe = controlledTimeframe ?? internalTimeframe;
+  const setTimeframe = (v: TimeframeKey) =>
+    (onTimeframeChange ?? setInternalTimeframe)(v);
   // Capture "now" once on mount so the cutoff is stable across re-renders.
   const [now] = useState(() => Date.now());
 
-  const tf = TIMEFRAMES.find((t) => t.key === timeframe)!;
+  const tf = timeframeFor(timeframe);
   const hourly = timeframe === "24h";
-  const cutoff = tf.days === Infinity ? -Infinity : now - tf.days * 86_400_000;
+  const cutoff = cutoffFor(now, tf);
 
   const filtered = useMemo(
     () => events.filter((e) => new Date(e.ts).getTime() >= cutoff),
@@ -120,7 +117,9 @@ export default function AnalyticsPanel({ events }: { events: SlimEvent[] }) {
           <h3 className="text-base font-semibold tracking-tight text-white">Traffic overview</h3>
           <p className="mt-1 text-xs text-zinc-500">Bot activity across your site</p>
         </div>
-        <TimeframeSelector value={timeframe} onChange={setTimeframe} />
+        {!hideTimeframeSelector && (
+          <TimeframeSelector value={timeframe} onChange={setTimeframe} />
+        )}
       </div>
 
       {/* KPI cards */}
@@ -164,10 +163,6 @@ export default function AnalyticsPanel({ events }: { events: SlimEvent[] }) {
 
 /* ---------- helpers ---------- */
 
-function pct(n: number, total: number) {
-  return total > 0 ? `${Math.round((n / total) * 100)}%` : "0%";
-}
-
 function countByDisplay(events: SlimEvent[], displayName: (n: string) => string) {
   const m = new Map<string, number>();
   for (const e of events) {
@@ -175,42 +170,6 @@ function countByDisplay(events: SlimEvent[], displayName: (n: string) => string)
     m.set(dn, (m.get(dn) ?? 0) + 1);
   }
   return m;
-}
-
-function topCounts(rows: SlimEvent[], key: keyof SlimEvent, limit = 5) {
-  const m = new Map<string, number>();
-  for (const r of rows) {
-    const v = r[key];
-    if (typeof v === "string" && v) m.set(v, (m.get(v) ?? 0) + 1);
-  }
-  return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
-}
-
-// Referrers, normalised to their host so "direct" and per-page noise collapse.
-function topReferrerCounts(rows: SlimEvent[], limit = 8): [string, number][] {
-  const m = new Map<string, number>();
-  for (const r of rows) {
-    const ref = r.referrer;
-    let label: string;
-    if (!ref) label = "Direct / none";
-    else {
-      try {
-        label = new URL(ref).hostname.replace(/^www\./, "");
-      } catch {
-        label = ref;
-      }
-    }
-    m.set(label, (m.get(label) ?? 0) + 1);
-  }
-  return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
-}
-
-function timeLabel(iso: string, hourly: boolean) {
-  const d = new Date(iso);
-  const t = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-  if (hourly) return t;
-  const m = d.toLocaleString(undefined, { month: "short" });
-  return `${m} ${d.getDate()}, ${t}`;
 }
 
 /* ---------- components ---------- */
@@ -357,25 +316,6 @@ function AreaChart({
   );
 }
 
-// Catmull-Rom → cubic bezier for a smooth, premium curve.
-function smoothPath(pts: { x: number; y: number }[]) {
-  if (pts.length === 0) return "";
-  if (pts.length === 1) return `M ${pts[0].x} ${pts[0].y}`;
-  let d = `M ${pts[0].x} ${pts[0].y}`;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[i - 1] ?? pts[i];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = pts[i + 2] ?? p2;
-    const c1x = p1.x + (p2.x - p0.x) / 6;
-    const c1y = p1.y + (p2.y - p0.y) / 6;
-    const c2x = p2.x - (p3.x - p1.x) / 6;
-    const c2y = p2.y - (p3.y - p1.y) / 6;
-    d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2.x} ${p2.y}`;
-  }
-  return d;
-}
-
 function Legend({
   bots,
   colorFor,
@@ -445,14 +385,6 @@ function Counts({
     </div>
   );
 }
-
-const CATEGORY_TONE: Record<string, string> = {
-  ai: "#34d399",
-  search: "#60a5fa",
-  seo: "#a78bfa",
-  scraper: "#fbbf24",
-  vuln_scan: "#f87171",
-};
 
 function RecentTable({
   rows,

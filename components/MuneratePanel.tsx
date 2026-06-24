@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import BrandMark from "@/components/BrandMark";
 
 export default function MuneratePanel({
   siteId,
@@ -54,8 +55,11 @@ export default function MuneratePanel({
     <div className="mb-6 rounded-lg border border-border p-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-text-h">
+          <p className="flex items-center gap-2 text-sm text-text-h">
             Status: <span className="font-mono">{status}</span>
+            {status === "crawling" && (
+              <BrandMark size={16} animated tile={false} title="Crawling" />
+            )}
           </p>
           {msg && <p className="mt-1 text-sm text-text">{msg}</p>}
         </div>

@@ -1,6 +1,20 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   Two design systems coexist:
+
+   1. LEGACY DARK THEME — the existing app (/sites, /demo, /login, /scan). Kept
+      exactly as it was so those pages are unchanged while we redesign only the
+      landing page.
+
+   2. NEOBRUTALIST LANDING — cream canvas, white cards, black borders + hard
+      offset shadows, oversized type. Pink #ff2a6d / blue #0533ff are bold
+      ACCENTS (hero/CTA bands, the cartogram, highlights), not the whole
+      palette. The invert toggle swaps the two accents (data-theme "a" ⇄ "b").
+   ============================================================================ */
+
 :root {
+  /* — legacy dark app theme (unchanged) — */
   --text: #a39db0;
   --text-h: #f5f3f9;
   --bg: #0c0a12;
@@ -11,9 +25,25 @@
   --accent-border: #432d63;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* — neobrutalist two-colour system (landing) — */
+  --field-a: #ff2a6d; /* pink */
+  --field-b: #0533ff; /* electric blue */
+  --neo-main: var(--field-a); /* primary accent; flips with invert */
+  --neo-ink: #0d0d12; /* near-black text on light */
+  --neo-paper: #f6f0e6; /* cream canvas */
+  --neo-card: #ffffff; /* white cards */
+}
+
+/* INVERT: swap the two field colours. data-theme is set pre-paint (layout.tsx)
+   and toggled by ThemeToggle. */
+[data-theme="b"] {
+  --field-a: #0533ff;
+  --field-b: #ff2a6d;
 }
 
 @theme inline {
+  /* legacy */
   --color-text: var(--text);
   --color-text-h: var(--text-h);
   --color-bg: var(--bg);
@@ -24,6 +54,21 @@
   --color-accent-border: var(--accent-border);
   --font-sans: var(--sans);
   --font-mono: var(--mono);
+
+  /* neobrutalist colour utilities: bg-field-a, bg-field-b, bg-neo-main,
+     text-neo-ink, bg-neo-paper, bg-neo-card, … */
+  --color-field-a: var(--field-a);
+  --color-field-b: var(--field-b);
+  --color-neo-main: var(--neo-main);
+  --color-neo-ink: var(--neo-ink);
+  --color-neo-paper: var(--neo-paper);
+  --color-neo-card: var(--neo-card);
+
+  /* hard offset shadows + crisp radius → shadow-neo / shadow-neo-lg / rounded-neo */
+  --shadow-neo: 4px 4px 0 0 #000;
+  --shadow-neo-lg: 7px 7px 0 0 #000;
+  --shadow-neo-sm: 2px 2px 0 0 #000;
+  --radius-neo: 12px;
 }
 
 html {
@@ -32,6 +77,8 @@ html {
   font-family: var(--sans);
 }
 
+/* Dark ambient background for the legacy app pages. The landing paints its own
+   full-bleed colour-field bands over this. */
 body {
   color: var(--text);
   background:
@@ -43,17 +90,88 @@ body {
   background-repeat: no-repeat;
 }
 
-a {
-  color: var(--accent);
+/* Default link colour for the legacy app. Scoped to @layer base so Tailwind
+   text-colour utilities (utilities layer) can override it — an UNLAYERED rule
+   here would beat every utility and silently repaint coloured links/wordmarks. */
+@layer base {
+  a {
+    color: var(--accent);
+  }
 }
 
-.brand-gradient {
-  background: linear-gradient(100deg, #c084fc 0%, #aa3bff 45%, #6366f1 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/* Brand wordmark (Comfortaa) + oversized display headlines (Archivo), both
+   self-hosted via next/font and exposed as CSS variables on <html>. */
+.font-brand {
+  font-family: var(--font-brand), var(--sans);
+}
+.font-display {
+  font-family: var(--font-display), var(--sans);
+  font-weight: 800;
+}
+
+/* Black outline for blue text on the pink field — gives the low-contrast blue
+   definition + punch. FIXED 1.5px width so it's the SAME on every element
+   (matches the Munerate wordmark) — deliberately NOT proportional to each
+   element's font-size. SVG blue text (cartogram names, logo bars) uses stroke +
+   paint-order. Declared as a Tailwind @utility so it lands in the page's CSS
+   chunk. Tune the px below to make the outline finer/heavier everywhere. */
+@utility ink-outline {
+  text-shadow:
+    1.2px 1.2px 0 #000, -1.2px 1.2px 0 #000, 1.2px -1.2px 0 #000,
+    -1.2px -1.2px 0 #000, 1.2px 0 0 #000, -1.2px 0 0 #000, 0 1.2px 0 #000,
+    0 -1.2px 0 #000;
 }
 
 ::selection {
-  background: var(--accent-bg);
+  background: var(--neo-main);
+  color: #fff;
+}
+
+/* ── Animations ──────────────────────────────────────────────────────────── */
+
+/* Cartogram: a territory flashes white when one of its agents accesses content. */
+@keyframes tile-pulse {
+  0% {
+    opacity: 0.75;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.animate-tile-pulse {
+  animation: tile-pulse 1s ease-out forwards;
+}
+
+/* BrandMark loader: the three logo bars rise and fall like an equaliser. */
+@keyframes bar-bounce {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* Live toast entrance. */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+.animate-toast-in {
+  animation: toast-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-tile-pulse,
+  .animate-toast-in,
+  [data-brandmark-bar] {
+    animation: none !important;
+  }
 }
