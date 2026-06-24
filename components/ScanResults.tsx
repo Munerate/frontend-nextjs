@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import BrandMark from "@/components/BrandMark";
 import {
   CATEGORY_ORDER,
   type ScanResult,
@@ -61,7 +62,7 @@ export default function ScanResults({ domain }: { domain: string }) {
   if (loading) {
     return (
       <div className="mx-auto mt-16 max-w-2xl px-6 text-center">
-        <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-border border-t-accent" />
+        <BrandMark size={48} animated title="Scanning" className="mx-auto block" />
         <p className="mt-6 text-sm text-text">
           Scanning <span className="font-medium text-text-h">{domain}</span> for AI-agent
           readiness…

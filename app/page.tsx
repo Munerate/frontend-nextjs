@@ -1,25 +1,12 @@
 import Link from "next/link";
 import Brand from "@/components/Brand";
 import LandingHero from "@/components/LandingHero";
+import ThemeToggle from "@/components/ThemeToggle";
+import LandingDashboard from "@/components/LandingDashboard";
+import { Button } from "@/components/ui/button";
+import { getValuations } from "@/lib/valuations";
+import { generateBacklog } from "@/lib/demo-traffic";
 import { getSupabaseServer } from "@/lib/supabase/server";
-
-const STEPS = [
-  {
-    n: "1",
-    title: "Drop in the middleware",
-    body: "Add the Munerate middleware to your site and verify your domain. It sits in front of your content and inspects every incoming request.",
-  },
-  {
-    n: "2",
-    title: "See who's scraping you",
-    body: "We fingerprint AI crawlers, bots, and scrapers in real time — so you can see exactly how much of your content is being harvested to train and ground other people's models.",
-  },
-  {
-    n: "3",
-    title: "Put it behind a paywall",
-    body: "Estimate what that traffic is worth, then move high-value content under a Munerate paywall. AI agents pay to access it — you get paid for what was being taken for free.",
-  },
-];
 
 export default async function Home() {
   const supabase = await getSupabaseServer();
@@ -27,73 +14,48 @@ export default async function Home() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const { rows: valuations, fetchedAt } = await getValuations();
+  const backlog = generateBacklog(600);
+
   return (
-    <main className="flex flex-1 flex-col">
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 py-5 sm:px-10">
-        <Brand href="/" />
-        {user ? (
-          <Link href="/sites" className="text-sm font-medium text-accent">
-            Dashboard
-          </Link>
-        ) : (
-          <Link href="/login" className="text-sm font-medium text-accent">
-            Sign in
-          </Link>
-        )}
+    <main className="flex flex-1 flex-col bg-field-a">
+      {/* Top bar — same pink field as the rest of the site (no alternating bg) */}
+      <header className="sticky top-0 z-40 flex items-center justify-between border-b-4 border-black bg-field-a px-6 py-3.5 text-neo-ink sm:px-10">
+        {/* tile-less: blue logo + wordmark on the pink header (the blue accent;
+            logo follows the text colour, so it flips with the invert toggle) */}
+        <Brand href="/" size="xl" className="text-field-b ink-outline" tile={false} />
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <Button asChild variant="b" size="sm">
+            <Link href={user ? "/sites" : "/login"}>
+              {user ? "Dashboard" : "Sign in"}
+            </Link>
+          </Button>
+        </div>
       </header>
 
-      {/* Hero */}
-      <section className="flex flex-col items-center px-6 py-20 text-center sm:py-28">
-        <span className="rounded-full border border-accent-border bg-accent-bg px-3 py-1 text-xs font-medium text-accent">
-          Free AI-readiness scan
-        </span>
-        <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-text-h sm:text-5xl">
-          Scan your site to see how AI-ready it is — then get paid when agents read it.
-        </h1>
-        <p className="mt-5 max-w-xl text-base text-text sm:text-lg">
-          Munerate scans your site for AI-agent readability, shows you which crawlers are
-          harvesting your content, and lets you move it behind a paywall so the bots pay
-          you instead.
-        </p>
-        <LandingHero />
-        <p className="mt-3 text-xs text-text">
-          Enter your domain to scan it free — no signup required.
-        </p>
-      </section>
+      {/* The dashboard-as-landing (colour-field bands) */}
+      <LandingDashboard
+        valuations={valuations}
+        fetchedAt={fetchedAt}
+        backlog={backlog}
+      />
 
-      {/* How it works */}
-      <section className="border-t border-border px-6 py-20 sm:px-10">
-        <div className="mx-auto max-w-4xl">
-          <h2 className="text-center text-2xl font-semibold text-text-h">How it works</h2>
-          <div className="mt-12 grid gap-10 sm:grid-cols-3">
-            {STEPS.map((s) => (
-              <div key={s.n}>
-                <div className="flex h-9 w-9 items-center justify-center rounded-full border border-accent-border bg-accent-bg text-sm font-semibold text-accent">
-                  {s.n}
-                </div>
-                <h3 className="mt-4 font-medium text-text-h">{s.title}</h3>
-                <p className="mt-2 text-sm text-text">{s.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA footer */}
-      <section className="border-t border-border px-6 py-20 text-center sm:px-10">
-        <h2 className="text-2xl font-semibold text-text-h">
-          Stop giving your content away for free.
+      {/* CTA band */}
+      <section className="border-b-4 border-black bg-field-a px-6 py-16 text-center text-white sm:px-10">
+        <h2 className="font-display mx-auto max-w-2xl text-3xl font-extrabold uppercase leading-tight tracking-tight text-field-b ink-outline sm:text-4xl">
+          See this for your own site.
         </h2>
-        <p className="mx-auto mt-3 max-w-md text-sm text-text">
-          Scan your domain, install the middleware, and turn AI scraping into revenue.
+        <p className="mx-auto mt-3 max-w-md text-sm font-bold text-white/90">
+          Scan your domain free to see which agents are reading you — and what
+          they should be paying.
         </p>
-        <div className="mt-8 flex flex-col items-center">
+        <div className="mt-2 flex justify-center">
           <LandingHero />
         </div>
       </section>
 
-      <footer className="mt-auto border-t border-border px-6 py-6 text-center text-xs text-text sm:px-10">
+      <footer className="border-t-4 border-black bg-field-a px-6 py-8 text-center text-xs font-bold text-neo-ink/70 sm:px-10">
         © {2026} Munerate
       </footer>
     </main>
