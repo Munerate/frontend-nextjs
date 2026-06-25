@@ -4,6 +4,8 @@
 // many of the emerging agent/commerce specs are marked `informational` — they're shown
 // but don't move the score, since they only apply to API/commerce sites.
 
+import { UA, TIMEOUT_MS, type Fetched, tryFetch, extractText } from "@/lib/fetch-utils";
+
 export type CheckStatus = "pass" | "warn" | "fail";
 
 export type CheckCategory =
@@ -41,11 +43,8 @@ export type ScanResult = {
   scannedAt: string;
 };
 
-const UA = "munerate-scanner";
-const TIMEOUT_MS = 8000;
-
 // Named AI/agent crawlers we look for in robots.txt.
-const AI_BOTS = [
+export const AI_BOTS = [
   "GPTBot",
   "ClaudeBot",
   "Claude-Web",
@@ -56,41 +55,6 @@ const AI_BOTS = [
   "Bytespider",
   "Applebot-Extended",
 ];
-
-type Fetched = {
-  ok: boolean;
-  status: number;
-  body: string;
-  contentType: string;
-  headers: Record<string, string>;
-};
-
-async function tryFetch(
-  url: string,
-  headers: Record<string, string> = {}
-): Promise<Fetched | null> {
-  try {
-    const res = await fetch(url, {
-      headers: { "user-agent": UA, ...headers },
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-      redirect: "follow",
-    });
-    const body = await res.text();
-    const h: Record<string, string> = {};
-    res.headers.forEach((v, k) => {
-      h[k.toLowerCase()] = v;
-    });
-    return {
-      ok: res.ok,
-      status: res.status,
-      body,
-      contentType: res.headers.get("content-type") ?? "",
-      headers: h,
-    };
-  } catch {
-    return null;
-  }
-}
 
 // DNS-over-HTTPS TXT lookup via Cloudflare. Best-effort; returns the TXT answers.
 async function dohTxt(name: string): Promise<string[] | null> {
@@ -108,20 +72,6 @@ async function dohTxt(name: string): Promise<string[] | null> {
   } catch {
     return null;
   }
-}
-
-function extractText(html: string): string {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 const present = (f: Fetched | null) =>

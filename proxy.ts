@@ -40,7 +40,8 @@ export async function proxy(request: NextRequest) {
     path === "/auth/callback" ||
     isAuthPage ||
     path.startsWith("/demo") ||
-    path.startsWith("/scan");
+    path.startsWith("/scan") ||
+    path.startsWith("/analyze");
 
   if (!user && !isPublicPage) {
     const url = request.nextUrl.clone();
