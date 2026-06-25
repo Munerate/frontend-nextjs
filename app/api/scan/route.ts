@@ -1,4 +1,5 @@
 import { scanDomain } from "@/lib/agent-scan";
+import { normalizeDomain } from "@/lib/fetch-utils";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -27,15 +28,4 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
-}
-
-function normalizeDomain(raw: string): string | null {
-  const clean = raw
-    .trim()
-    .replace(/^https?:\/\//i, "")
-    .replace(/\/.*$/, "")
-    .toLowerCase();
-  // Must look like a hostname: at least one dot, valid label characters.
-  if (!/^[a-z0-9.-]+\.[a-z]{2,}$/.test(clean)) return null;
-  return clean;
 }
