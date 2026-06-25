@@ -4,13 +4,15 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-neo border-2 border-black font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black disabled:pointer-events-none disabled:opacity-50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-neo border-2 border-neo-frame font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neo-frame disabled:pointer-events-none disabled:opacity-50 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none",
   {
     variants: {
       variant: {
         default:
-          "bg-neo-main text-white shadow-neo hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-neo-lg",
-        b: "bg-field-b text-white shadow-neo hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-neo-lg",
+          "bg-neo-main text-neo-on-primary shadow-neo hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-neo-lg",
+        b: "bg-field-b text-neo-on-accent shadow-neo hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-neo-lg",
+        bDark:
+          "bg-field-b text-neo-on-accent border-white shadow-neo-white hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-neo-lg-white",
         neutral:
           "bg-white text-black shadow-neo hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-neo-lg",
         ink: "bg-black text-white shadow-neo hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-neo-lg",

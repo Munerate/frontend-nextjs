@@ -14,9 +14,12 @@ type BrandProps = {
   /** Text size of the wordmark. */
   size?: keyof typeof SIZES;
   className?: string;
-  /** Render the rounded "app icon" tile behind the mark (default true). The
-   *  landing header sets this false so the logo is just the three bars. */
+  /** Render the rounded "app icon" tile behind the mark (default true). */
   tile?: boolean;
+  /** Tile + bar fills, forwarded to BrandMark (the landing logo uses a pink tile
+   *  with blue bars). */
+  tileFill?: string;
+  barFill?: string;
 };
 
 // Wordmark inherits `currentColor` so it reads correctly on any colour-field
@@ -26,10 +29,12 @@ export default function Brand({
   size = "md",
   className,
   tile = true,
+  tileFill,
+  barFill,
 }: BrandProps) {
   const content = (
     <>
-      <BrandMark size={SIZES[size].mark} tile={tile} />
+      <BrandMark size={SIZES[size].mark} tile={tile} tileFill={tileFill} barFill={barFill} />
       <span className={`font-brand font-bold tracking-tight ${SIZES[size].text}`}>
         Munerate
       </span>

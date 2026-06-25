@@ -7,10 +7,28 @@
       exactly as it was so those pages are unchanged while we redesign only the
       landing page.
 
-   2. NEOBRUTALIST LANDING — cream canvas, white cards, black borders + hard
-      offset shadows, oversized type. Pink #ff2a6d / blue #0533ff are bold
-      ACCENTS (hero/CTA bands, the cartogram, highlights), not the whole
-      palette. The invert toggle swaps the two accents (data-theme "a" ⇄ "b").
+   2. NEOBRUTALIST LANDING — a single calm canvas with striking accents (NOT
+      full-bleed colour-field bands). The whole landing rides on ONE warm-white
+      canvas (--neo-canvas), with the economy section on a subtly cream tint
+      (--neo-paper) for rhythm. Sections are separated by whitespace + 1px
+      hairlines (--neo-line), never saturated walls. Oversized Archivo type and
+      hard offset shadows + thick black borders are reserved for a small set of
+      "showpieces" (the live counter card, the cartogram, primary buttons, the
+      CTA panel); everything else stays flat and quiet.
+
+      COLOUR ROLES (so the two brand colours never fight) — "Settlement", a
+      dark azure + hot-orange palette for the AI-agent-payments brand:
+        • canvas → near-black blue-tinted (--neo-canvas); economy → a slightly
+          raised tint (--neo-paper). Cards/surfaces → dark (--neo-card).
+        • text/figures → cool light off-white ink (--neo-ink) on the dark canvas.
+        • hard neobrutalist frames + offset shadows are now LIGHT (--neo-frame)
+          since black frames/shadows vanish on the dark canvas.
+        • azure #0b6fe0 → brand + primary action (buttons, LIVE badge, the one
+          contained CTA panel, cartogram cells). Never a full-section background.
+          Text on azure is white (--neo-on-primary); text on the orange accent is
+          dark (--neo-on-accent).
+        • hot orange #ff7a00 → the small "live" signal dot only (live ticker +
+          toasts) and the logo bars. Never orange on sky, never a surface.
    ============================================================================ */
 
 :root {
@@ -26,20 +44,34 @@
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  /* — neobrutalist two-colour system (landing) — */
-  --field-a: #ff2a6d; /* pink */
-  --field-b: #0533ff; /* electric blue */
-  --neo-main: var(--field-a); /* primary accent; flips with invert */
-  --neo-ink: #0d0d12; /* near-black text on light */
-  --neo-paper: #f6f0e6; /* cream canvas */
-  --neo-card: #ffffff; /* white cards */
-}
-
-/* INVERT: swap the two field colours. data-theme is set pre-paint (layout.tsx)
-   and toggled by ThemeToggle. */
-[data-theme="b"] {
-  --field-a: #0533ff;
-  --field-b: #ff2a6d;
+  /* — neobrutalist "Settlement" system (landing): dark sky blue + gold — */
+  --field-a: #0b6fe0;
+  /* azure — brand + primary action (deep/saturated for a strong orange complement) */
+  --field-b: #ff7a00;
+  /* hot pure orange — live signal dot + logo bars (complement of the sky primary) */
+  --neo-main: var(--field-a);
+  /* primary accent (sky blue) */
+  --neo-ink: #e6eef7;
+  /* cool light off-white text on the dark canvas */
+  --neo-canvas: #0a0f16;
+  /* near-black, blue-tinted page canvas (the whole landing rides on this) */
+  --neo-line: #1c2738;
+  /* subtle blue-tinted hairline divider on dark */
+  --neo-paper: #0e1420;
+  /* slightly raised blue tint for the one rhythm section (the economy band) */
+  --neo-card: #121a26;
+  /* dark blue-tinted elevated card surface (replaces the old white cards) */
+  --neo-frame: #cbd5e3;
+  /* hard neobrutalist frame colour — light/cool, since black vanishes on the canvas */
+  --neo-on-accent: #06121c;
+  /* dark blue-tinted text/icons that sit ON the hot-orange accent (field-b) */
+  --neo-on-primary: #ffffff;
+  /* white text/icons that sit ON the deep azure primary (field-a / neo-main) */
+  --ink-shadow: 3px 3px 0 #000;
+  /* hard offset shadow for blue text + logo — the one knob; matches cards/buttons */
+  --ink-shadow-sm: 1px 1px 0 #000;
+  /* smaller offset for the tiny SVG map labels (cartogram names) so the shadow
+     stays proportional to the small text instead of overpowering it */
 }
 
 @theme inline {
@@ -61,13 +93,27 @@
   --color-field-b: var(--field-b);
   --color-neo-main: var(--neo-main);
   --color-neo-ink: var(--neo-ink);
+  --color-neo-canvas: var(--neo-canvas);
+  --color-neo-line: var(--neo-line);
   --color-neo-paper: var(--neo-paper);
   --color-neo-card: var(--neo-card);
+  --color-neo-frame: var(--neo-frame);
+  --color-neo-on-accent: var(--neo-on-accent);
+  --color-neo-on-primary: var(--neo-on-primary);
 
-  /* hard offset shadows + crisp radius → shadow-neo / shadow-neo-lg / rounded-neo */
-  --shadow-neo: 4px 4px 0 0 #000;
-  --shadow-neo-lg: 7px 7px 0 0 #000;
-  --shadow-neo-sm: 2px 2px 0 0 #000;
+  /* hard offset shadows + crisp radius → shadow-neo / shadow-neo-lg / rounded-neo
+     ELEVATION DISCIPLINE (use by role, not by vibe):
+       sm  → passive chips: badges, the live ticker, toasts.
+       neo → interactive controls: buttons, inputs, standard cards.
+       lg  → the ONE hero object per band (the live-$ card, the cartogram frame),
+             which also gets border-4 (everything else stays border-2). */
+  --shadow-neo: 4px 4px 0 0 #cbd5e3;
+  --shadow-neo-lg: 7px 7px 0 0 #cbd5e3;
+  --shadow-neo-sm: 2px 2px 0 0 #cbd5e3;
+  /* white variants — boxes/buttons on the black sections (black shadows vanish on black) */
+  --shadow-neo-white: 4px 4px 0 0 #fff;
+  --shadow-neo-lg-white: 7px 7px 0 0 #fff;
+  --shadow-neo-sm-white: 2px 2px 0 0 #fff;
   --radius-neo: 12px;
 }
 
@@ -104,27 +150,33 @@ body {
 .font-brand {
   font-family: var(--font-brand), var(--sans);
 }
+
 .font-display {
   font-family: var(--font-display), var(--sans);
   font-weight: 800;
 }
 
-/* Black outline for blue text on the pink field — gives the low-contrast blue
-   definition + punch. FIXED 1.5px width so it's the SAME on every element
-   (matches the Munerate wordmark) — deliberately NOT proportional to each
-   element's font-size. SVG blue text (cartogram names, logo bars) uses stroke +
-   paint-order. Declared as a Tailwind @utility so it lands in the page's CSS
-   chunk. Tune the px below to make the outline finer/heavier everywhere. */
+/* Landing body/UI copy (Inter). Pairs with the heavy display font to give the
+   landing real weight contrast (medium/semibold body vs 800 display) instead of
+   everything being bold. Landing-only — legacy pages keep font-sans → --sans. */
+.font-text {
+  font-family: var(--font-text), var(--sans);
+}
+
+/* Hard offset "ink" text-shadow (solid black, offset, no blur) — the same
+   neobrutalist drop as the cards/buttons. This previously rescued low-contrast
+   blue text on the pink field; that pattern is gone (on pink we now use ink or
+   white text — see the colour-usage rule above), so it's kept only as a reusable
+   offset-ink helper. The cartogram SVG labels cast their own, proportionally
+   smaller shadow via filter: drop-shadow(var(--ink-shadow-sm)). Declared as a
+   Tailwind @utility so it lands in the page's CSS chunk. */
 @utility ink-outline {
-  text-shadow:
-    1.2px 1.2px 0 #000, -1.2px 1.2px 0 #000, 1.2px -1.2px 0 #000,
-    -1.2px -1.2px 0 #000, 1.2px 0 0 #000, -1.2px 0 0 #000, 0 1.2px 0 #000,
-    0 -1.2px 0 #000;
+  text-shadow: var(--ink-shadow);
 }
 
 ::selection {
   background: var(--neo-main);
-  color: #fff;
+  color: var(--neo-on-primary);
 }
 
 /* ── Animations ──────────────────────────────────────────────────────────── */
@@ -134,20 +186,24 @@ body {
   0% {
     opacity: 0.75;
   }
+
   100% {
     opacity: 0;
   }
 }
+
 .animate-tile-pulse {
   animation: tile-pulse 1s ease-out forwards;
 }
 
 /* BrandMark loader: the three logo bars rise and fall like an equaliser. */
 @keyframes bar-bounce {
+
   0%,
   100% {
     transform: scaleY(0.35);
   }
+
   50% {
     transform: scaleY(1);
   }
@@ -159,16 +215,19 @@ body {
     opacity: 0;
     transform: translateX(12px) translateY(4px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0) translateY(0);
   }
 }
+
 .animate-toast-in {
   animation: toast-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .animate-tile-pulse,
   .animate-toast-in,
   [data-brandmark-bar] {

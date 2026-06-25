@@ -44,17 +44,17 @@ export default function ToastStack({ toasts }: { toasts: Toast[] }) {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className="animate-toast-in flex items-start gap-2.5 rounded-neo border-2 border-black bg-field-b px-3.5 py-2.5 text-white shadow-neo"
+          className="animate-toast-in flex items-start gap-2.5 rounded-neo border-2 border-neo-frame bg-neo-card px-3.5 py-2.5 text-neo-ink shadow-neo"
         >
           <span
-            className="mt-1 h-3 w-3 shrink-0 rounded-full border-2 border-black"
+            className="mt-1 h-3 w-3 shrink-0 rounded-full border-2 border-neo-frame"
             style={{ backgroundColor: t.color }}
           />
           <div className="min-w-0 flex-1 text-xs leading-tight">
             <div className="font-bold tabular-nums">
               {fmtCount(t.reads)} reads · {fmtOwed(t.owed)} extracted
             </div>
-            <div className="mt-0.5 font-medium text-white/60">
+            <div className="mt-0.5 font-medium text-neo-ink/50">
               last {t.seconds}s · led by {t.leadCompany}
             </div>
           </div>
