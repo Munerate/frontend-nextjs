@@ -220,7 +220,7 @@ export default function LandingDashboard({
               crowd at the bottom of the same image. */}
           <div className="mx-auto mt-16 w-full max-w-2xl rounded-neo border-4 border-neo-frame bg-field-a px-6 py-12 text-center text-neo-on-primary shadow-neo-lg sm:px-10 md:mt-24">
             <h2 className="font-display text-3xl font-extrabold uppercase leading-[0.95] tracking-tight text-neo-on-primary md:text-5xl">
-              See this for your own site.
+              See what AI owes your site.
             </h2>
             <p className="font-text mx-auto mt-4 max-w-md text-base font-medium text-neo-on-primary/90">
               Scan your domain free to see which agents are reading you — and what
