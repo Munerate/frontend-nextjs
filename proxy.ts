@@ -62,6 +62,6 @@ export async function proxy(request: NextRequest) {
 // Guard everything except static assets, the public detect endpoint, and SKILL.md.
 export const config = {
   matcher: [
-    "/((?!api/detect|api/scan|_next/static|_next/image|favicon.ico|SKILL.md|.*\\.svg).*)",
+    "/((?!api/detect|api/scan|_next/static|_next/image|favicon.ico|SKILL.md|.*\\.(?:svg|jpe?g|png|webp|gif|avif|ico)).*)",
   ],
 };

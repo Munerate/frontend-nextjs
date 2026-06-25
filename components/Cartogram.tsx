@@ -36,10 +36,9 @@ export default function Cartogram({
   }, [tiles]);
   const byId = useMemo(() => new Map(tiles.map((t) => [t.id, t])), [tiles]);
 
-  // Every territory is a uniform pink cell with a blue outline + blue ink, so
-  // the whole map flips with the invert toggle. Consumption is read from each
-  // tile's hits/$ label, the live pulse, and the owed panel below — not from
-  // the fill colour.
+  // Every territory is a uniform azure cell with WHITE ink — a light-framed inset
+  // that pops on the dark canvas. Consumption is read from each tile's $ label,
+  // the live pulse, and the popover — not the fill.
   function track(e: { clientX: number; clientY: number }, id: string) {
     const r = wrapRef.current?.getBoundingClientRect();
     if (!r) return;
@@ -56,13 +55,13 @@ export default function Cartogram({
       className={`relative ${className ?? ""}`}
       onMouseLeave={() => setHover(null)}
     >
-      <div className="overflow-hidden rounded-neo border-2 border-black shadow-neo-lg">
+      <div className="overflow-hidden rounded-neo border-4 border-neo-frame shadow-neo-lg">
         <svg
           viewBox={`0 0 ${W} ${H}`}
           className="block h-auto w-full select-none"
           role="img"
           aria-label="The AI economy by valuation; each territory's size is its market value and lights up as its agents access your content"
-          style={{ fontFamily: "var(--font-display)", background: "#0d0d12" }}
+          style={{ fontFamily: "var(--font-display)", background: "var(--neo-canvas)" }}
         >
           {rects.map((r) => {
             const t = byId.get(r.id);
@@ -85,7 +84,7 @@ export default function Cartogram({
                   height={r.h}
                   rx={4}
                   fill="var(--field-a)"
-                  stroke="#000"
+                  stroke="var(--neo-canvas)"
                   strokeWidth={4}
                 />
                 {/* live-access flash; re-mounts on each nonce so it replays */}
@@ -97,7 +96,7 @@ export default function Cartogram({
                     width={Math.max(0, r.w - 4)}
                     height={Math.max(0, r.h - 4)}
                     rx={3}
-                    fill="var(--field-b)"
+                    fill="#fff"
                     className="animate-tile-pulse"
                     style={{ pointerEvents: "none" }}
                   />
@@ -120,10 +119,7 @@ export default function Cartogram({
                   <text
                     x={r.x + 15}
                     y={r.y + 32}
-                    fill="var(--field-b)"
-                    stroke="#000"
-                    strokeWidth={1.8}
-                    paintOrder="stroke"
+                    fill="var(--neo-on-primary)"
                     fontSize={22}
                     fontWeight={800}
                   >
@@ -134,8 +130,8 @@ export default function Cartogram({
                   <text
                     x={r.x + 15}
                     y={r.y + 53}
-                    fill="#fff"
-                    fillOpacity={0.92}
+                    fill="var(--neo-on-primary)"
+                    fillOpacity={0.9}
                     fontSize={16}
                     fontWeight={600}
                   >
@@ -146,7 +142,7 @@ export default function Cartogram({
                   <text
                     x={r.x + 15}
                     y={r.y + r.h - 16}
-                    fill="#fff"
+                    fill="var(--neo-on-primary)"
                     fontSize={15}
                     fontWeight={700}
                   >
@@ -163,8 +159,8 @@ export default function Cartogram({
         <CartogramPopover tile={hovered} x={hover.x} y={hover.y} />
       ) : null}
 
-      {/* legend */}
-      <div className="mt-4 text-sm font-medium text-white/70">
+      {/* legend — on the cream band, so ink (not white). */}
+      <div className="font-text mt-4 text-sm font-medium text-neo-ink/60">
         Each cell is an AI company sized by valuation; the figure is our estimate
         of what it has extracted from content providers. Hover any territory for detail.
       </div>
@@ -194,7 +190,7 @@ function CartogramPopover({
 
   return (
     <div
-      className="pointer-events-none absolute z-20 w-64 -translate-x-1/2 -translate-y-full rounded-neo border-2 border-black bg-neo-ink p-3.5 text-white shadow-neo-lg"
+      className="pointer-events-none absolute z-20 w-64 -translate-x-1/2 -translate-y-full rounded-neo border-2 border-white bg-neo-card p-3.5 text-white shadow-neo-lg-white"
       style={{ left: x, top: y - 16 }}
     >
       <div className="flex items-baseline justify-between gap-2">
