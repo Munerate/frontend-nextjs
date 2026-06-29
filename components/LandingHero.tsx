@@ -13,10 +13,14 @@ import { cn } from "@/lib/utils";
 export default function LandingHero({
   buttonVariant = "b",
   buttonLabel = "Scan free →",
+  destination = "/analyze",
   className,
 }: {
   buttonVariant?: VariantProps<typeof buttonVariants>["variant"];
   buttonLabel?: string;
+  // Where to route on submit. The landing CTAs point at "/traffic" (the missed-
+  // revenue view); the legacy /scan funnel keeps "/analyze".
+  destination?: string;
   className?: string;
 }) {
   const router = useRouter();
@@ -25,7 +29,7 @@ export default function LandingHero({
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const clean = domain.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-    router.push(`/analyze${clean ? `?domain=${encodeURIComponent(clean)}` : ""}`);
+    router.push(`${destination}${clean ? `?domain=${encodeURIComponent(clean)}` : ""}`);
   }
 
   return (

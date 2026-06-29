@@ -42,7 +42,9 @@ export async function proxy(request: NextRequest) {
     path.startsWith("/demo") ||
     path.startsWith("/scan") ||
     path.startsWith("/analyze") ||
-    path.startsWith("/api/analyze");
+    path.startsWith("/api/analyze") ||
+    path.startsWith("/traffic") ||
+    path.startsWith("/api/traffic");
 
   if (!user && !isPublicPage) {
     const url = request.nextUrl.clone();
