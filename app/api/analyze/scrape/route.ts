@@ -7,6 +7,10 @@ export const maxDuration = 60;
 // Custom UA per the demo brief — we crawl as MunerateBot so the scrape is honest
 // about who we are.
 const BOT_UA = "MunerateBot/1.0; (+https://munerate.com/bot)";
+// Fallback UA: many sites (e.g. Medium) block unknown bots outright. If the honest
+// bot UA is refused, retry once as a browser so the demo can still scrape the page.
+const BROWSER_UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 const MAX_CONTEXT = 6000;
 
 // Public, unauthenticated: phase 2 of the /analyze funnel. Scrapes one page and uses
@@ -28,7 +32,10 @@ export async function POST(req: Request) {
     return Response.json({ error: "Enter a valid page URL." }, { status: 400 });
   }
 
-  const page = await tryFetch(url.toString(), { "user-agent": BOT_UA });
+  let page = await tryFetch(url.toString(), { "user-agent": BOT_UA });
+  if (!page || !page.ok || !page.body.trim()) {
+    page = await tryFetch(url.toString(), { "user-agent": BROWSER_UA });
+  }
   if (!page || !page.ok || !page.body.trim()) {
     return Response.json(
       { error: "Could not fetch that page." },

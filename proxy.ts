@@ -41,7 +41,8 @@ export async function proxy(request: NextRequest) {
     isAuthPage ||
     path.startsWith("/demo") ||
     path.startsWith("/scan") ||
-    path.startsWith("/analyze");
+    path.startsWith("/analyze") ||
+    path.startsWith("/api/analyze");
 
   if (!user && !isPublicPage) {
     const url = request.nextUrl.clone();

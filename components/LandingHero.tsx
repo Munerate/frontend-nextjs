@@ -25,7 +25,7 @@ export default function LandingHero({
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const clean = domain.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
-    router.push(`/scan${clean ? `?domain=${encodeURIComponent(clean)}` : ""}`);
+    router.push(`/analyze${clean ? `?domain=${encodeURIComponent(clean)}` : ""}`);
   }
 
   return (

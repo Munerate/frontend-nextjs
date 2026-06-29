@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function AnalyzeHero() {
   const router = useRouter();
@@ -14,21 +16,19 @@ export default function AnalyzeHero() {
   }
 
   return (
-    <form onSubmit={submit} className="mt-8 flex w-full max-w-md flex-col gap-3 sm:flex-row">
-      <input
+    <form onSubmit={submit} className="mt-8 flex w-full max-w-lg flex-col gap-3 sm:flex-row">
+      <Input
         type="text"
         inputMode="url"
         placeholder="yourdomain.com"
         value={domain}
         onChange={(e) => setDomain(e.target.value)}
-        className="flex-1 rounded-md border border-border bg-bg px-3 py-2.5 text-sm text-text-h outline-none focus:border-accent"
+        className="flex-1"
+        aria-label="Your domain"
       />
-      <button
-        type="submit"
-        className="rounded-md bg-accent px-5 py-2.5 text-sm font-medium text-white whitespace-nowrap"
-      >
-        Analyze
-      </button>
+      <Button type="submit" variant="b" size="lg" className="whitespace-nowrap">
+        Analyze →
+      </Button>
     </form>
   );
 }
