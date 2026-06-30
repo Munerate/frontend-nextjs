@@ -17,9 +17,6 @@ export default async function EstimatePage({
     <main className="flex flex-1 flex-col min-h-screen">
       <header className="flex items-center justify-between px-6 py-5 sm:px-10">
         <Brand href="/" />
-        <Link href="/" className="text-sm font-medium text-accent">
-          Back home
-        </Link>
       </header>
 
       {clean ? (

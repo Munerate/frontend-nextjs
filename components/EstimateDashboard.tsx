@@ -1,22 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 
-function usd(value: number) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value);
+function fmtInt(n: number): string {
+  if (n >= 1e9) return `${parseFloat((n / 1e9).toFixed(2))}B`;
+  if (n >= 1e6) return `${parseFloat((n / 1e6).toFixed(2))}M`;
+  if (n >= 1e3) return `${parseFloat((n / 1e3).toFixed(1))}K`;
+  return Math.round(n).toLocaleString();
 }
 
-function fmtInt(value: number) {
-  return new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 0,
-  }).format(value);
+function usd(value: number) {
+  return `$${fmtInt(value)}`;
 }
 
 export default function EstimateDashboard({ url }: { url: string }) {
@@ -24,6 +23,7 @@ export default function EstimateDashboard({ url }: { url: string }) {
   const [pricePerReq, setPricePerReq] = useState(0.015);
   const [visits, setVisits] = useState(1000000); // 1M as default
   const [isLoadingVisits, setIsLoadingVisits] = useState(true);
+  const [showExtras, setShowExtras] = useState(false);
 
   useEffect(() => {
     async function fetchVisits() {
@@ -46,6 +46,13 @@ export default function EstimateDashboard({ url }: { url: string }) {
     }
     fetchVisits();
   }, [url]);
+
+  // Once the estimate has rendered, reveal the visits slider + CTA after a beat.
+  useEffect(() => {
+    if (isLoadingVisits) return;
+    const t = setTimeout(() => setShowExtras(true), 2000);
+    return () => clearTimeout(t);
+  }, [isLoadingVisits]);
 
   const agentRequests = visits * (aiPct / 100);
   const missedRevenue = agentRequests * pricePerReq;
@@ -103,6 +110,40 @@ export default function EstimateDashboard({ url }: { url: string }) {
             raw={pricePerReq}
             onChange={setPricePerReq}
           />
+        </div>
+
+        {/* Revealed a couple seconds after the estimate renders. */}
+        {/* <div
+          className={cn(
+            "transition-all duration-700",
+            showExtras
+              ? "mt-6 max-h-96 opacity-100 translate-y-0"
+              : "max-h-0 opacity-0 translate-y-2 overflow-hidden pointer-events-none",
+          )}
+        >
+          <Slider
+            label="Monthly visits to your site"
+            value={fmtInt(visits)}
+            min={1000}
+            max={20000000}
+            step={1000}
+            raw={visits}
+            onChange={setVisits}
+          />
+        </div> */}
+
+        <div
+          className={cn(
+            "transition-all duration-700 delay-200",
+            showExtras ? "mt-12 opacity-100 translate-y-0" : "mt-0 opacity-0 translate-y-4 pointer-events-none",
+          )}
+        >
+          <Button asChild variant="b" size="lg">
+            <Link href="/sites">Munerate your content</Link>
+          </Button>
+          <p className="font-text mt-3 text-sm font-medium text-white/60">
+            Know exactly which agents are visiting your site — and get paid for it.
+          </p>
         </div>
       </div>
     </section>
