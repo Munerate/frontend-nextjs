@@ -39,7 +39,7 @@ export async function proxy(request: NextRequest) {
     path === "/" ||
     path === "/auth/callback" ||
     isAuthPage ||
-    path.startsWith("/demo") ||
+    path.startsWith("/demo") || path.startsWith("/estimate")||
     path.startsWith("/scan");
 
   if (!user && !isPublicPage) {
@@ -62,6 +62,6 @@ export async function proxy(request: NextRequest) {
 // Guard everything except static assets, the public detect endpoint, and SKILL.md.
 export const config = {
   matcher: [
-    "/((?!api/detect|api/scan|_next/static|_next/image|favicon.ico|SKILL.md|.*\\.(?:svg|jpe?g|png|webp|gif|avif|ico)).*)",
+    "/((?!api/detect|api/scan|api/estimate|_next/static|_next/image|favicon.ico|SKILL.md|.*\\.(?:svg|jpe?g|png|webp|gif|avif|ico)).*)",
   ],
 };
