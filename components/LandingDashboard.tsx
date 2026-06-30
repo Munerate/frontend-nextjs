@@ -154,7 +154,7 @@ export default function LandingDashboard({
               <p className="font-display mb-4 text-xl font-extrabold uppercase leading-[1.05] tracking-tight text-white md:text-2xl">
                 See what AI owes your site.
               </p>
-              <LandingHero buttonVariant="b" buttonLabel="Scan my site →" className="mt-0 max-w-none" />
+              <LandingHero buttonVariant="b" buttonLabel="Find out →" className="mt-0 max-w-none" />
             </div>
           </div>
         </div>
