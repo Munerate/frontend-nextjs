@@ -10,6 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import CountUp from "@/components/CountUp";
 import MoneyFlow from "@/components/MoneyFlow";
 import EmailCapture from "@/components/EmailCapture";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 export default function EstimateDashboard({ url }: { url: string }) {
   const [aiPct, setAiPct] = useState(12);
@@ -33,25 +34,55 @@ export default function EstimateDashboard({ url }: { url: string }) {
   const effMonths = useMemo(() => effectiveMonthsSinceEpoch(nowMs), [nowMs]);
 
   useEffect(() => {
+    let cancelled = false;
+    const key = url.trim();
+
     async function fetchVisits() {
       setIsLoadingVisits(true);
+      const supabase = getSupabaseClient();
       try {
+        // Reuse a previously cached estimate for this URL if one exists.
+        const { data: cached } = await supabase
+          .from("visit_estimates")
+          .select("visits")
+          .eq("url", key)
+          .maybeSingle();
+        if (cancelled) return;
+        if (cached) {
+          setVisits(Number(cached.visits));
+          return;
+        }
+
         const res = await fetch("/api/estimate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url }),
         });
+        if (cancelled) return;
         if (res.ok) {
           const data = await res.json();
-          if (data.visits) setVisits(data.visits);
+          if (data.visits) {
+            setVisits(data.visits);
+            // Persist so future requests for the same URL reuse this estimate.
+            // ignoreDuplicates avoids errors on concurrent first-loads.
+            await supabase
+              .from("visit_estimates")
+              .upsert(
+                { url: key, visits: data.visits },
+                { onConflict: "url", ignoreDuplicates: true }
+              );
+          }
         }
       } catch (err) {
         console.error("Failed to fetch visits estimate:", err);
       } finally {
-        setIsLoadingVisits(false);
+        if (!cancelled) setIsLoadingVisits(false);
       }
     }
     fetchVisits();
+    return () => {
+      cancelled = true;
+    };
   }, [url]);
 
   const agentRequests = visits * (aiPct / 100);

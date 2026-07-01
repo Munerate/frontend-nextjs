@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   const { url } = (await request.json().catch(() => ({}))) as {
     url?: string;
   };
-  
+
   if (!url || !url.trim()) {
     return Response.json({ ok: false, error: "url is required" }, { status: 400 });
   }

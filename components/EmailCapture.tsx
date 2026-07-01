@@ -10,30 +10,39 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function EmailCapture({ url }: { url: string }) {
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "error" | "success">("idle");
+  const [status, setStatus] = useState<"idle" | "error" | "submitting" | "success">("idle");
+  const [errorMsg, setErrorMsg] = useState("Please enter a valid email address.");
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = email.trim();
     if (!EMAIL_RE.test(trimmed)) {
+      setErrorMsg("Please enter a valid email address.");
       setStatus("error");
       return;
     }
-    setStatus("success");
-    // ────────────────────────────────────────────────────────────────────────
-    // INTEGRATION POINT (co-dev): swap this stub for the real flow —
-    // kick off email auth for `trimmed` and start the self-serve install of the
-    // tracking middleware for `url`, e.g.
-    //   await claimSite({ email: trimmed, url });
-    // Consider adding a "submitting" status here with a loading spinner (reuse
-    // the BrandMark-in-button idiom from LandingHero), and setStatus("error")
-    // with a server message on failure.
-    // ────────────────────────────────────────────────────────────────────────
+    setStatus("submitting");
+    try {
+      const supabase = getSupabaseClient();
+      const { error } = await supabase
+        .from("claims")
+        .insert({ email: trimmed.toLowerCase(), url });
+      if (error) {
+        setErrorMsg("Something went wrong. Please try again.");
+        setStatus("error");
+        return;
+      }
+      setStatus("success");
+    } catch {
+      setErrorMsg("Something went wrong. Please try again.");
+      setStatus("error");
+    }
   }
 
   if (status === "success") {
@@ -92,8 +101,14 @@ export default function EmailCapture({ url }: { url: string }) {
             className={status === "error" ? "border-field-b" : undefined}
           />
         </div>
-        <Button type="submit" variant="b" size="lg" className="whitespace-nowrap">
-          Claim
+        <Button
+          type="submit"
+          variant="b"
+          size="lg"
+          className="whitespace-nowrap"
+          disabled={status === "submitting"}
+        >
+          {status === "submitting" ? "Claiming…" : "Claim"}
         </Button>
       </form>
 
@@ -103,7 +118,7 @@ export default function EmailCapture({ url }: { url: string }) {
           role="alert"
           className="font-text mt-2 text-sm font-medium text-field-b"
         >
-          Please enter a valid email address.
+          {errorMsg}
         </p>
       )}
 
