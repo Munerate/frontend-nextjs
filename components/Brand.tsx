@@ -16,8 +16,8 @@ type BrandProps = {
   className?: string;
   /** Render the rounded "app icon" tile behind the mark (default true). */
   tile?: boolean;
-  /** Tile + bar fills, forwarded to BrandMark (the landing logo uses a pink tile
-   *  with blue bars). */
+  /** Tile + bar fills, forwarded to BrandMark (the landing logo uses a blue tile
+   *  with white bars). */
   tileFill?: string;
   barFill?: string;
 };

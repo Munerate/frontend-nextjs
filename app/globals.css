@@ -17,18 +17,18 @@
       CTA panel); everything else stays flat and quiet.
 
       COLOUR ROLES (so the two brand colours never fight) — "Settlement", a
-      dark azure + hot-orange palette for the AI-agent-payments brand:
+      dark azure + hot-pink palette for the AI-agent-payments brand:
         • canvas → near-black blue-tinted (--neo-canvas); economy → a slightly
           raised tint (--neo-paper). Cards/surfaces → dark (--neo-card).
         • text/figures → cool light off-white ink (--neo-ink) on the dark canvas.
         • hard neobrutalist frames + offset shadows are now LIGHT (--neo-frame)
           since black frames/shadows vanish on the dark canvas.
-        • azure #0b6fe0 → brand + primary action (buttons, LIVE badge, the one
+        • blue #245cff → brand + primary action (buttons, LIVE badge, the one
           contained CTA panel, cartogram cells). Never a full-section background.
-          Text on azure is white (--neo-on-primary); text on the orange accent is
+          Text on blue is white (--neo-on-primary); text on the pink accent is
           dark (--neo-on-accent).
-        • hot orange #ff7a00 → the small "live" signal dot only (live ticker +
-          toasts) and the logo bars. Never orange on sky, never a surface.
+        • hot rose #ff4d87 → the small "live" signal dot only (live ticker +
+          toasts) and the logo bars. Never pink on sky, never a surface.
    ============================================================================ */
 
 :root {
@@ -45,10 +45,14 @@
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   /* — neobrutalist "Settlement" system (landing): dark sky blue + gold — */
-  --field-a: #0b6fe0;
-  /* azure — brand + primary action (deep/saturated for a strong orange complement) */
-  --field-b: #ff7a00;
-  /* hot pure orange — live signal dot + logo bars (complement of the sky primary) */
+  --field-a: #245cff;
+  /* azure — brand + primary action. Brighter/slightly-desaturated vs the old
+     #0533ff so the bold blue FILLS (cartogram cells, CTA panel, logo tile) read
+     as crisp planes on black instead of halating; white text on it stays AA (5.19). */
+  --field-b: #ff4d87;
+  /* hot rose — live signal dot + logo bars. Desaturated off the old neon #ff2a6d
+     so the pair reads premium not rave; dark text on it is AA (6.0) and it stays
+     legible as the big pink estimate number on black (6.7). */
   --neo-main: var(--field-a);
   /* primary accent (sky blue) */
   --neo-ink: #e6eef7;
@@ -64,7 +68,7 @@
   --neo-frame: #cbd5e3;
   /* hard neobrutalist frame colour — light/cool, since black vanishes on the canvas */
   --neo-on-accent: #06121c;
-  /* dark blue-tinted text/icons that sit ON the hot-orange accent (field-b) */
+  /* dark blue-tinted text/icons that sit ON the hot-pink accent (field-b) */
   --neo-on-primary: #ffffff;
   /* white text/icons that sit ON the deep azure primary (field-a / neo-main) */
   --ink-shadow: 3px 3px 0 #000;
@@ -226,10 +230,43 @@ body {
   animation: toast-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Money-flow: a stat card flashes when its driving slider changes. */
+@keyframes stat-flash {
+  0% {
+    background-color: color-mix(in srgb, var(--field-b) 22%, transparent);
+  }
+
+  100% {
+    background-color: transparent;
+  }
+}
+
+.animate-flash {
+  animation: stat-flash 0.5s ease-out;
+}
+
+/* Money-flow: the proportional AI-share bar grows in on first reveal. */
+@keyframes bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.animate-bar-grow {
+  transform-origin: left;
+  animation: bar-grow 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
 
   .animate-tile-pulse,
   .animate-toast-in,
+  .animate-flash,
+  .animate-bar-grow,
   [data-brandmark-bar] {
     animation: none !important;
   }

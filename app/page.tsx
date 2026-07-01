@@ -17,7 +17,7 @@ export default async function Home() {
 
   return (
     <main className="flex flex-1 flex-col bg-neo-canvas text-neo-ink">
-      {/* Top bar — light sticky bar with a hairline; pink wordmark tile, blue bars */}
+      {/* Top bar — dark translucent sticky bar with a hairline; blue wordmark tile, white bars */}
       <header className="sticky top-0 z-40 border-b border-white/10 bg-black/20 px-6 py-4 text-white backdrop-blur-md sm:px-10 md:py-5">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
           <Brand
