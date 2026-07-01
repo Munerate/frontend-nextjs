@@ -84,8 +84,9 @@ export async function runSiteResearch(url: string, signal?: AbortSignal): Promis
 
   const system =
     "You are MunerateBot, a web-research agent investigating a website to estimate how much " +
-    "AI-agent traffic it receives. Use web_search to learn what the site is, who visits it, and " +
-    "its rough scale/popularity. Be fast and decisive — a couple of searches is enough.\n\n" +
+    "AI-agent traffic it receives. Use web_search to look for ranking, SEO related info, and traffic metrics " +
+    "(e.g., Similarweb, Ahrefs rank) to learn its true scale/popularity, rather than just restating basic known info. " +
+    "Be fast and decisive — a couple of searches is enough.\n\n" +
     "End your final message with EXACTLY ONE fenced JSON code block (```json ... ```) and nothing " +
     "after it, of the form:\n" +
     '{"findings": [<3-5 short strings: what the site is, its audience, why AI agents would access it>], ' +
@@ -153,10 +154,9 @@ export async function estimateTraffic(
     `Findings: ${research.findings.join("; ") || "(none)"}\n` +
     `Summary: ${research.summary || "(none)"}\n` +
     `Traffic hint: ${research.trafficHint || "(none)"}\n\n` +
-    "Estimate this site's average monthly visits as a single integer. Use the traffic hint if it " +
-    "gives a number; otherwise infer from the site's apparent scale and audience. If the site is " +
-    "obscure and you truly cannot tell, use 100000.\n" +
-    'Respond with EXACTLY ONE fenced JSON code block: {"visits": <integer, no commas>}';
+    "Estimate this site's average monthly visits as a single integer based strictly on the findings. " +
+    "Use the traffic hint if it gives a number. If the site is described as a small side project, obscure, or has zero indexed web presence/SEO ranking, estimate a very low number (e.g., 10 to 500). " +
+    "Respond with EXACTLY ONE fenced JSON code block: {\"visits\": <integer, no commas>}";
 
   const text = await complete({
     model: MODELS.cheap,
@@ -167,8 +167,8 @@ export async function estimateTraffic(
 
   const parsed = parseJsonBlock<{ visits?: number }>(text);
   const visits =
-    typeof parsed?.visits === "number" && isFinite(parsed.visits) && parsed.visits > 0
+    typeof parsed?.visits === "number" && isFinite(parsed.visits) && parsed.visits >= 0
       ? Math.round(parsed.visits)
-      : 100000;
+      : 100;
   return { visits };
 }

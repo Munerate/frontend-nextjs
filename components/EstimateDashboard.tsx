@@ -151,7 +151,7 @@ export default function EstimateDashboard({ url }: { url: string }) {
             {/* What MunerateBot learned. */}
             {(summary || findings.length > 0) && (
               <div className="mt-6 max-w-2xl rounded-lg border border-white/10 bg-white/3 p-4 animate-in fade-in slide-in-from-bottom-2 duration-700 delay-300 fill-mode-both">
-                <p className="font-text text-xs font-semibold uppercase tracking-wide text-field-b">
+                <p className="font-text text-xs font-semibold tracking-wide text-field-b">
                   MunerateBot findings
                 </p>
                 {summary && <p className="font-text mt-2 text-sm text-white/80">{summary}</p>}
