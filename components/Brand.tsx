@@ -41,7 +41,7 @@ export default function Brand({
     </>
   );
 
-  const base = `inline-flex items-center gap-2 ${className ?? ""}`;
+  const base = `inline-flex items-center gap-2 text-inherit no-underline ${className ?? ""}`;
 
   if (href) {
     return (

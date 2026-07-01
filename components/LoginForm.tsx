@@ -51,10 +51,17 @@ export default function LoginForm() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center p-6">
-      <div className="w-full max-w-sm">
-        <Brand size="lg" />
-        <p className="mt-1 mb-6 text-sm text-text">
+    <main className="relative isolate flex flex-1 items-center justify-center overflow-hidden bg-neo-canvas p-6 text-neo-ink">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-b from-black/40 via-transparent to-black/50"
+      />
+      <div className="w-full max-w-sm rounded-neo border-4 border-neo-frame bg-neo-card p-7 shadow-neo-lg">
+        <Brand size="lg" tileFill="var(--field-a)" barFill="#ffffff" />
+        <h1 className="font-display mt-5 text-2xl font-extrabold uppercase leading-[0.95] tracking-tight">
+          {mode === "signin" ? "Welcome back" : "Get started"}
+        </h1>
+        <p className="font-text mt-1 mb-6 text-sm font-medium text-neo-ink/60">
           {mode === "signin" ? "Sign in to your dashboard." : "Create an account."}
         </p>
         <form onSubmit={submit} className="flex flex-col gap-3">
@@ -64,7 +71,7 @@ export default function LoginForm() {
             placeholder="you@company.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="rounded-md border border-border bg-bg px-3 py-2 text-sm text-text-h outline-none focus:border-accent"
+            className="font-text rounded-neo border-2 border-neo-frame bg-neo-canvas px-3 py-2 text-sm text-neo-ink outline-none transition-colors placeholder:text-neo-ink/40 focus:border-neo-main"
           />
           <input
             type="password"
@@ -73,20 +80,20 @@ export default function LoginForm() {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="rounded-md border border-border bg-bg px-3 py-2 text-sm text-text-h outline-none focus:border-accent"
+            className="font-text rounded-neo border-2 border-neo-frame bg-neo-canvas px-3 py-2 text-sm text-neo-ink outline-none transition-colors placeholder:text-neo-ink/40 focus:border-neo-main"
           />
           <button
             type="submit"
             disabled={busy}
-            className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-white disabled:opacity-60"
+            className="font-display rounded-neo border-2 border-neo-frame bg-neo-main px-3 py-2.5 text-sm font-extrabold uppercase tracking-tight text-neo-on-primary shadow-neo transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:translate-x-0 disabled:translate-y-0 disabled:opacity-60"
           >
             {busy ? "…" : mode === "signin" ? "Sign in" : "Sign up"}
           </button>
         </form>
-        {msg && <p className="mt-3 text-sm text-text">{msg}</p>}
+        {msg && <p className="font-text mt-3 text-sm text-neo-ink/80">{msg}</p>}
         <button
           onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-          className="mt-4 text-sm text-accent"
+          className="font-text mt-4 text-sm font-semibold text-field-b transition-colors hover:text-field-b/80"
         >
           {mode === "signin" ? "Need an account? Sign up" : "Have an account? Sign in"}
         </button>

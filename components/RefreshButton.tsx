@@ -14,7 +14,7 @@ export default function RefreshButton() {
       onClick={() => start(() => router.refresh())}
       disabled={pending}
       title="Fetch latest data"
-      className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-text-h transition-colors hover:bg-accent-bg disabled:opacity-60"
+      className="font-text flex items-center gap-1.5 rounded-neo border-2 border-neo-frame px-3 py-1.5 text-sm font-semibold text-neo-ink transition-colors hover:bg-neo-card disabled:opacity-60"
     >
       {pending ? (
         <BrandMark size={16} animated tile={false} title="Refreshing" />

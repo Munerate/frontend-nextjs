@@ -21,23 +21,23 @@ export default async function DashboardLayout({
     .order("created_at", { ascending: true });
 
   return (
-    <div className="flex flex-1">
-      <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-accent-bg/30 px-3 py-5">
-        <Brand href="/sites" className="mb-6 px-2" />
+    <div className="flex flex-1 bg-neo-canvas text-neo-ink">
+      <aside className="flex w-64 shrink-0 flex-col border-r border-neo-line bg-neo-paper px-3 py-5">
+        <Brand className="mb-6 px-2" tileFill="var(--field-a)" barFill="#ffffff" />
 
         <nav className="flex flex-col gap-0.5">
           <Link
             href="/sites/new"
-            className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-text-h transition-colors hover:bg-accent-bg"
+            className="font-text flex items-center gap-2.5 rounded-neo px-2.5 py-2 text-sm font-semibold text-neo-ink transition-colors hover:bg-neo-card"
           >
-            <svg className="h-4 w-4 text-text" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+            <svg className="h-4 w-4 text-field-b" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
             Add domain
           </Link>
         </nav>
 
-        <div className="mt-6 mb-1.5 px-2.5 text-xs font-semibold uppercase tracking-wider text-text">
+        <div className="font-text mt-6 mb-1.5 px-2.5 text-xs font-bold uppercase tracking-wider text-neo-ink/50">
           Sites
         </div>
         <nav className="flex flex-col gap-0.5">
@@ -45,7 +45,7 @@ export default async function DashboardLayout({
             <Link
               key={s.id}
               href={`/sites/${s.id}`}
-              className="group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-text-h transition-colors hover:bg-accent-bg"
+              className="font-text group flex items-center gap-2.5 rounded-neo px-2.5 py-2 text-sm text-neo-ink transition-colors hover:bg-neo-card"
             >
               <img
                 src={`https://favicon.im/${s.domain}`}
@@ -59,12 +59,12 @@ export default async function DashboardLayout({
             </Link>
           ))}
           {(sites ?? []).length === 0 && (
-            <p className="px-2.5 py-2 text-sm text-text">No sites yet.</p>
+            <p className="font-text px-2.5 py-2 text-sm text-neo-ink/60">No sites yet.</p>
           )}
         </nav>
 
-        <div className="mt-5 border-t border-border pt-4">
-          <div className="mb-2 truncate px-2.5 text-xs text-text">{user.email}</div>
+        <div className="mt-5 border-t border-neo-line pt-4">
+          <div className="font-text mb-2 truncate px-2.5 text-xs text-neo-ink/60">{user.email}</div>
           <SignOut />
         </div>
       </aside>

@@ -20,9 +20,11 @@ export default async function NewSitePage({
   }
 
   return (
-    <div className="max-w-md">
-      <h1 className="text-2xl font-semibold text-text-h">Add a domain</h1>
-      <p className="mt-1 mb-6 text-sm text-text">
+    <div className="max-w-md rounded-neo border-4 border-neo-frame bg-neo-card p-7 shadow-neo-lg">
+      <h1 className="font-display text-2xl font-extrabold uppercase leading-[0.95] tracking-tight text-neo-ink">
+        Add a domain
+      </h1>
+      <p className="font-text mt-1 mb-6 text-sm font-medium text-neo-ink/60">
         Enter the domain you want to monitor. We&apos;ll generate a verification token and your
         site tag.
       </p>
@@ -33,17 +35,17 @@ export default async function NewSitePage({
           defaultValue={typeof domain === "string" ? domain : undefined}
           placeholder="example.com"
           autoComplete="off"
-          className="rounded-md border border-border bg-bg px-3 py-2 text-sm text-text-h outline-none focus:border-accent"
+          className="font-text rounded-neo border-2 border-neo-frame bg-neo-canvas px-3 py-2 text-sm text-neo-ink outline-none transition-colors placeholder:text-neo-ink/40 focus:border-neo-main"
         />
         <button
           type="submit"
-          className="self-start rounded-md bg-accent px-4 py-2 text-sm font-medium text-white"
+          className="font-display self-start rounded-neo border-2 border-neo-frame bg-neo-main px-4 py-2.5 text-sm font-extrabold uppercase tracking-tight text-neo-on-primary shadow-neo transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5"
         >
           Add domain
         </button>
       </form>
       {error && (
-        <p className="mt-3 text-sm text-red-500">
+        <p className="font-text mt-3 text-sm text-field-b">
           {error === "invalid" ? "Please enter a valid domain." : String(error)}
         </p>
       )}

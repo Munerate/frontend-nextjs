@@ -60,12 +60,12 @@ export default async function SitePage({ params }: PageProps<"/sites/[id]">) {
               height={24}
               className="h-6 w-6 shrink-0 rounded-sm"
             />
-            <h1 className="text-2xl font-semibold text-text-h">{site.domain}</h1>
+            <h1 className="font-display text-2xl font-extrabold uppercase leading-[0.95] tracking-tight text-neo-ink">{site.domain}</h1>
           </div>
-        <p className="mt-1 text-sm text-text">
-          Site tag: <span className="font-mono text-text-h">{site.site_tag}</span>
+        <p className="font-text mt-2 text-sm text-neo-ink/70">
+          Site tag: <span className="font-mono text-neo-ink">{site.site_tag}</span>
         </p>
-        <p className="mt-0.5 text-xs text-text">
+        <p className="font-text mt-0.5 text-xs text-neo-ink/50">
           🔒 This tag authenticates your traffic — keep it private and don&apos;t share it publicly.
         </p>
       </div>
@@ -74,17 +74,17 @@ export default async function SitePage({ params }: PageProps<"/sites/[id]">) {
         <section>
           <div className="mb-3 flex items-center justify-between">
             <div>
-              <h2 className="font-medium text-text-h">Analytics</h2>
+              <h2 className="font-display text-lg font-extrabold uppercase tracking-tight text-neo-ink">Analytics</h2>
             </div>
             <RefreshButton />
           </div>
 
           {rows.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border p-8 text-center">
-              <p className="text-sm text-text">
+            <div className="rounded-neo border-2 border-dashed border-neo-frame bg-neo-card p-8 text-center">
+              <p className="font-text text-sm text-neo-ink/80">
                 Waiting for events to be triggered from your client…
               </p>
-              <p className="mt-1 text-xs text-text">
+              <p className="font-text mt-1 text-xs text-neo-ink/50">
                 Install the middleware on the right, then hit Refresh once traffic arrives.
               </p>
             </div>
@@ -93,15 +93,15 @@ export default async function SitePage({ params }: PageProps<"/sites/[id]">) {
           )}
         </section>
 
-        <aside className="rounded-xl border border-border bg-accent-bg/20 p-6 lg:self-start">
+        <aside className="rounded-neo border-2 border-neo-frame bg-neo-card p-6 shadow-neo lg:self-start">
           <MiddlewarePanel siteId={site.id} tag={site.site_tag} origin={origin} />
         </aside>
       </div>
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_minmax(0,34rem)] xl:gap-14">
         <section>
-          <h2 className="mb-1 font-medium text-text-h">Site configuration</h2>
-          <p className="mb-3 text-sm text-text">
+          <h2 className="font-display mb-1 text-lg font-extrabold uppercase tracking-tight text-neo-ink">Site configuration</h2>
+          <p className="font-text mb-3 text-sm text-neo-ink/70">
             Crawl your site so Munerate can index your content for grounded ask/find.
           </p>
           {/* Verify DNS / meta-tag ownership step is commented out for now.

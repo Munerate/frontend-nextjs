@@ -52,21 +52,21 @@ export default function MuneratePanel({
   }
 
   return (
-    <div className="mb-6 rounded-lg border border-border p-4">
+    <div className="mb-6 rounded-neo border-2 border-neo-frame bg-neo-card p-4 shadow-neo">
       <div className="flex items-center justify-between">
         <div>
-          <p className="flex items-center gap-2 text-sm text-text-h">
+          <p className="font-text flex items-center gap-2 text-sm text-neo-ink">
             Status: <span className="font-mono">{status}</span>
             {status === "crawling" && (
               <BrandMark size={16} animated tile={false} title="Crawling" />
             )}
           </p>
-          {msg && <p className="mt-1 text-sm text-text">{msg}</p>}
+          {msg && <p className="font-text mt-1 text-sm text-neo-ink/60">{msg}</p>}
         </div>
         <button
           onClick={crawl}
           disabled={busy || status === "crawling"}
-          className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="font-display rounded-neo border-2 border-neo-frame bg-neo-main px-4 py-2 text-sm font-extrabold uppercase tracking-tight text-neo-on-primary shadow-neo transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:translate-x-0 disabled:translate-y-0 disabled:opacity-60"
         >
           {status === "crawling" ? "Crawling…" : status === "ready" ? "Re-crawl" : "Munerate Content"}
         </button>

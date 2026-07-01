@@ -57,7 +57,7 @@ export default function EmailCapture({ url }: { url: string }) {
         </p>
         <p className="font-text mt-1 text-sm font-medium text-white/75">
           We&apos;ll email <span className="font-bold text-white">{email.trim()}</span>{" "}
-          your one-line install for{" "}
+          your install for{" "}
           <span className="font-bold text-white">{url}</span> so AI agents start
           paying you.
         </p>
