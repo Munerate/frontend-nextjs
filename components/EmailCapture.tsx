@@ -1,11 +1,11 @@
 "use client";
 
-// The conversion CTA: capture an email to "Claim" the site. UI-only for now —
-// validates client-side and shows a success state. The real work (email auth +
-// self-serve install of the tracking middleware that monitors this site's
-// AI-agent traffic ongoing) is wired by the co-dev at the INTEGRATION POINT
-// below. Copy points at that outcome: claim the site → drop in middleware →
-// track every AI agent → get paid.
+// The conversion CTA: capture an email to "Claim" the site. On submit we record
+// the claim (waitlist analytics) and kick off a passwordless magic-link signup.
+// The confirmation email lands the user on /sites/new?domain=<url>, which
+// auto-creates their site + tag and emails the install instructions. Outcome:
+// claim the site → confirm email → drop in middleware → track every AI agent →
+// get paid.
 
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -30,11 +30,25 @@ export default function EmailCapture({ url }: { url: string }) {
     setStatus("submitting");
     try {
       const supabase = getSupabaseClient();
-      const { error } = await supabase
-        .from("claims")
-        .insert({ email: trimmed.toLowerCase(), url });
+      const normalizedEmail = trimmed.toLowerCase();
+
+      // Record the claim (waitlist analytics). Non-fatal if it fails.
+      await supabase.from("claims").insert({ email: normalizedEmail, url });
+
+      // Passwordless signup: send a magic-link verification email. Clicking it
+      // lands on /sites/new?domain=<url>, which auto-creates the site + tag and
+      // emails the install instructions.
+      const next = `/sites/new?domain=${encodeURIComponent(url)}`;
+      const emailRedirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
+      const { error } = await supabase.auth.signInWithOtp({
+        email: normalizedEmail,
+        // flow: "claim" is surfaced in the email template as {{ .Data.flow }} so
+        // the confirm-signup email renders link-only (no OTP code) — the Claim
+        // flow completes by clicking the link, there's nowhere to paste a code.
+        options: { shouldCreateUser: true, emailRedirectTo, data: { flow: "claim" } },
+      });
       if (error) {
-        setErrorMsg("Something went wrong. Please try again.");
+        setErrorMsg(error.message || "Something went wrong. Please try again.");
         setStatus("error");
         return;
       }
@@ -53,13 +67,13 @@ export default function EmailCapture({ url }: { url: string }) {
         className="max-w-xl rounded-neo border-2 border-field-b bg-neo-card p-5 shadow-neo-white"
       >
         <p className="font-display text-lg font-extrabold text-field-b">
-          You&apos;re on the list.
+          Check your inbox.
         </p>
         <p className="font-text mt-1 text-sm font-medium text-white/75">
-          We&apos;ll email <span className="font-bold text-white">{email.trim()}</span>{" "}
-          your install for{" "}
-          <span className="font-bold text-white">{url}</span> so AI agents start
-          paying you.
+          We sent a confirmation link to{" "}
+          <span className="font-bold text-white">{email.trim()}</span>. Click it to
+          claim <span className="font-bold text-white">{url}</span> — we&apos;ll set
+          up your site and email your install so AI agents start paying you.
         </p>
       </div>
     );

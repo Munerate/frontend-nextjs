@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { addDomain, createSiteForCurrentUser } from "./actions";
+import { addDomain, createSiteForCurrentUser, sendInstallEmail } from "./actions";
 
 export default async function NewSitePage({
   searchParams,
@@ -11,6 +11,10 @@ export default async function NewSitePage({
   if (typeof domain === "string" && domain && !error) {
     const result = await createSiteForCurrentUser(domain);
     if ("id" in result) {
+      // First time claiming this domain → email the install instructions.
+      if (result.created) {
+        await sendInstallEmail(result.id);
+      }
       // The dashboard layout reads cookies (auth.getUser) so it's dynamic and
       // re-fetches the sidebar sites on this navigation — no revalidate needed.
       // (revalidatePath is illegal during render; calling it here crashed the page.)
