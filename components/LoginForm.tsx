@@ -6,7 +6,7 @@ import { getSupabaseClient } from "@/lib/supabase/client";
 import Brand from "@/components/Brand";
 
 // Passwordless auth. Step 1: enter email → Supabase sends an email with both a
-// magic link and a 6-digit code. Step 2: type the code → verifyOtp signs you in.
+// magic link and a code. Step 2: type the code → verifyOtp signs you in.
 // (The magic link still works too and lands on /auth/callback.) This mirrors the
 // Claim flow in EmailCapture, which relies on the link to carry site context.
 export default function LoginForm() {
@@ -90,9 +90,9 @@ export default function LoginForm() {
             "We'll email you a one-time code — no password needed."
           ) : (
             <>
-              We sent a 6-digit code to{" "}
+              We sent a code to{" "}
               <span className="font-bold text-neo-ink">{email.trim()}</span>. Enter
-              it below, or click the link in the email.
+              it below to sign in.
             </>
           )}
         </p>
@@ -120,8 +120,8 @@ export default function LoginForm() {
               autoFocus
               inputMode="numeric"
               autoComplete="one-time-code"
-              maxLength={6}
-              placeholder="123456"
+              maxLength={8}
+              placeholder="12345678"
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
               className={`${inputClass} text-center text-lg tracking-[0.5em]`}
