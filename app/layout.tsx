@@ -27,7 +27,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Munerate",
-  description: "Detect bot, AI-crawler, and vuln-scan traffic on your site.",
+  description: "See what AI owes your site.",
 };
 
 export default function RootLayout({

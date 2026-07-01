@@ -29,9 +29,9 @@
             <tr>
               <td style="padding:32px 28px 8px 28px;">
                 {{ if eq .Data.flow "claim" }}
-                <h1 style="margin:0 0 8px 0;font-size:22px;font-weight:800;color:#111111;letter-spacing:-0.02em;">Confirm your email to claim your site</h1>
+                <h1 style="margin:0 0 8px 0;font-size:22px;font-weight:800;color:#111111;letter-spacing:-0.02em;">Confirm your email to claim {{ if .Data.domain }}{{ .Data.domain }}{{ else }}your site{{ end }}</h1>
                 <p style="margin:0 0 24px 0;font-size:15px;line-height:1.5;color:#555555;">
-                  Tap the button below to confirm your email and finish claiming your site. We&rsquo;ll set it up and email your install instructions. This link expires shortly and can only be used once.
+                  {{ if .Data.domain }}You requested to claim <strong style="color:#111111;">{{ .Data.domain }}</strong>. {{ end }}Tap the button below to confirm your email and finish claiming {{ if .Data.domain }}it{{ else }}your site{{ end }}. We&rsquo;ll set it up and email your install instructions. This link expires shortly and can only be used once.
                 </p>
 
                 <!-- Confirm button (link-only for Claim) -->

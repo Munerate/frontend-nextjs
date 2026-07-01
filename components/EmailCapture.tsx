@@ -45,7 +45,9 @@ export default function EmailCapture({ url }: { url: string }) {
         // flow: "claim" is surfaced in the email template as {{ .Data.flow }} so
         // the confirm-signup email renders link-only (no OTP code) — the Claim
         // flow completes by clicking the link, there's nowhere to paste a code.
-        options: { shouldCreateUser: true, emailRedirectTo, data: { flow: "claim" } },
+        // domain is surfaced as {{ .Data.domain }} so the email names the exact
+        // site being claimed.
+        options: { shouldCreateUser: true, emailRedirectTo, data: { flow: "claim", domain: url } },
       });
       if (error) {
         setErrorMsg(error.message || "Something went wrong. Please try again.");
