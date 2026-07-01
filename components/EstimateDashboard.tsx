@@ -1,64 +1,112 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useState, useEffect, useMemo } from "react";
+import { ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usd } from "@/lib/format";
+import { effectiveMonthsSinceEpoch } from "@/lib/ai-ramp";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-
-function fmtInt(n: number): string {
-  if (n >= 1e9) return `${parseFloat((n / 1e9).toFixed(2))}B`;
-  if (n >= 1e6) return `${parseFloat((n / 1e6).toFixed(2))}M`;
-  if (n >= 1e3) return `${parseFloat((n / 1e3).toFixed(1))}K`;
-  return Math.round(n).toLocaleString();
-}
-
-function usd(value: number) {
-  return `$${fmtInt(value)}`;
-}
+import CountUp from "@/components/CountUp";
+import MoneyFlow from "@/components/MoneyFlow";
+import EmailCapture from "@/components/EmailCapture";
+import { getSupabaseClient } from "@/lib/supabase/client";
 
 export default function EstimateDashboard({ url }: { url: string }) {
-  const [aiPct, setAiPct] = useState(15);
-  const [pricePerReq, setPricePerReq] = useState(0.015);
+  const [aiPct, setAiPct] = useState(12);
+  const [pricePerReq, setPricePerReq] = useState(0.006);
   const [visits, setVisits] = useState(1000000); // 1M as default
   const [isLoadingVisits, setIsLoadingVisits] = useState(true);
-  const [showExtras, setShowExtras] = useState(false);
+  // The hero number counts up once on first reveal, then updates instantly on
+  // slider changes (re-counting on every drag reads laggy).
+  const [hasCounted, setHasCounted] = useState(false);
+  // Bumped when a slider moves (or visits are edited) so MoneyFlow flashes the
+  // affected cards.
+  const [flashAi, setFlashAi] = useState(0);
+  const [flashPrice, setFlashPrice] = useState(0);
+  const [flashVisits, setFlashVisits] = useState(0);
+  // Headline shows the cumulative total ramped since ChatGPT's launch by
+  // default; the pill toggles it to the current per-month figure.
+  const [view, setView] = useState<"cumulative" | "monthly">("cumulative");
+  // Captured once per mount (month-granularity → server/client agree, and the
+  // hero only renders client-side after the fetch anyway).
+  const [nowMs] = useState(() => Date.now());
+  const effMonths = useMemo(() => effectiveMonthsSinceEpoch(nowMs), [nowMs]);
 
   useEffect(() => {
+    let cancelled = false;
+    const key = url.trim();
+
     async function fetchVisits() {
       setIsLoadingVisits(true);
+      const supabase = getSupabaseClient();
       try {
+        // Reuse a previously cached estimate for this URL if one exists.
+        const { data: cached } = await supabase
+          .from("visit_estimates")
+          .select("visits")
+          .eq("url", key)
+          .maybeSingle();
+        if (cancelled) return;
+        if (cached) {
+          setVisits(Number(cached.visits));
+          return;
+        }
+
         const res = await fetch("/api/estimate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ url }),
         });
+        if (cancelled) return;
         if (res.ok) {
           const data = await res.json();
-          if (data.visits) setVisits(data.visits);
+          if (data.visits) {
+            setVisits(data.visits);
+            // Persist so future requests for the same URL reuse this estimate.
+            // ignoreDuplicates avoids errors on concurrent first-loads.
+            await supabase
+              .from("visit_estimates")
+              .upsert(
+                { url: key, visits: data.visits },
+                { onConflict: "url", ignoreDuplicates: true }
+              );
+          }
         }
       } catch (err) {
         console.error("Failed to fetch visits estimate:", err);
       } finally {
-        setIsLoadingVisits(false);
+        if (!cancelled) setIsLoadingVisits(false);
       }
     }
     fetchVisits();
+    return () => {
+      cancelled = true;
+    };
   }, [url]);
-
-  // Once the estimate has rendered, reveal the visits slider + CTA after a beat.
-  useEffect(() => {
-    if (isLoadingVisits) return;
-    const t = setTimeout(() => setShowExtras(true), 2000);
-    return () => clearTimeout(t);
-  }, [isLoadingVisits]);
 
   const agentRequests = visits * (aiPct / 100);
   const missedRevenue = agentRequests * pricePerReq;
+  const cumulative = missedRevenue * effMonths;
+  const headlineValue = view === "cumulative" ? cumulative : missedRevenue;
+
+  const heroClass =
+    "font-display block text-[clamp(2.75rem,12vw,7rem)] font-extrabold leading-none tabular-nums text-field-b";
 
   return (
-    <section className="relative isolate overflow-hidden bg-black px-6 py-16 text-white sm:px-10 md:py-24 h-full flex-1">
+    <section className="relative isolate -mt-20 overflow-hidden bg-black px-6 pb-16 pt-28 text-white sm:px-10 md:pb-24 md:pt-32 h-full flex-1">
+      {/* Background image — object-cover crops to any size; a dark scrim over it
+          keeps the headline, cards and form legible top-to-bottom. */}
+      <img
+        src="/caisino.webp"
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-20 h-full w-full object-cover object-center"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-black/70 via-black/55 to-black/75"
+      />
       <div className="mx-auto w-full max-w-5xl">
         <Badge variant="b">
           <span className="inline-flex h-2 w-2 rounded-full bg-neo-on-accent" />
@@ -67,31 +115,90 @@ export default function EstimateDashboard({ url }: { url: string }) {
         <h1 className="font-display mt-5 text-3xl font-extrabold uppercase leading-[0.95] tracking-tight md:text-5xl">
           AI agents owe you
         </h1>
-        {isLoadingVisits ? (
-          <div className="font-display mt-4 text-[clamp(2.75rem,12vw,7rem)] font-extrabold leading-none text-field-b/50 animate-pulse">
-            Analyzing...
+
+        {/* Hero number — counts up once, then tracks the sliders / the toggle.
+            The visible figure is aria-hidden; a static sr-only value carries it
+            for AT. The pill toggles cumulative-since-Nov-2022 vs per-month. */}
+        <div className="mt-4 flex flex-wrap items-end gap-x-3 gap-y-2">
+          <div aria-hidden>
+            {isLoadingVisits ? (
+              <span className={cn(heroClass, "text-field-b/50 animate-pulse")}>
+                Analyzing…
+              </span>
+            ) : !hasCounted ? (
+              <CountUp
+                to={headlineValue}
+                format={usd}
+                durationMs={1200}
+                onDone={() => setHasCounted(true)}
+                className={heroClass}
+              />
+            ) : (
+              <span className={heroClass}>{usd(headlineValue)}</span>
+            )}
           </div>
-        ) : (
-          <div className="font-display mt-4 text-[clamp(2.75rem,12vw,7rem)] font-extrabold leading-none tabular-nums text-field-b animate-in fade-in slide-in-from-bottom-2 duration-700">
-            {usd(missedRevenue)}
-          </div>
+          {!isLoadingVisits && (
+            <button
+              type="button"
+              onClick={() =>
+                setView((v) => (v === "cumulative" ? "monthly" : "cumulative"))
+              }
+              aria-label={
+                view === "cumulative"
+                  ? "Showing total owed since November 2022. Switch to per month."
+                  : "Showing amount owed per month. Switch to total since November 2022."
+              }
+              className="mb-2 inline-flex items-center gap-1 rounded-full border-2 border-white/40 px-2.5 py-0.5 text-xs font-bold text-white/80 transition-colors hover:bg-white/10"
+            >
+              {view === "cumulative" ? "since Nov 2022" : "per month"}
+              <ChevronsUpDown className="h-3 w-3" aria-hidden />
+            </button>
+          )}
+        </div>
+        <span className="sr-only">
+          {isLoadingVisits
+            ? "Calculating estimate"
+            : `${usd(headlineValue)} ${view === "cumulative" ? "owed since November 2022" : "owed per month"}`}
+        </span>
+
+        {/* AI-estimate disclaimer, tight under the number. */}
+        <p className="font-text mt-2 text-xs font-normal text-white/50">
+          Estimate generated by AI from public signals — it may be inaccurate.
+        </p>
+
+        {!isLoadingVisits && (
+          <p className="font-text mt-4 max-w-2xl text-base font-medium text-white/75 md:text-lg">
+            Based on {url}&apos;s estimated traffic and the ramp in AI usage since
+            ChatGPT&apos;s Nov 2022 launch — adjust the assumptions below to match
+            your reality.
+          </p>
         )}
 
-        {isLoadingVisits ? (
-          <p className="font-text mt-4 max-w-2xl text-base font-medium text-white/50 animate-pulse md:text-lg">
-            Consulting AI to estimate active monthly visits and potential agent traffic for {url}...
-          </p>
-        ) : (
-          <p className="font-text mt-4 max-w-2xl text-base font-medium text-white/75 md:text-lg animate-in fade-in slide-in-from-bottom-2 duration-700 delay-150 fill-mode-both">
-            Based on <span className="font-bold text-white">{fmtInt(visits)}</span> monthly
-            visits, an estimated <span className="font-bold text-field-b">{aiPct}%</span> from AI agents
-            at <span className="font-bold text-field-b">${pricePerReq.toFixed(3)}</span> per request — that&apos;s{" "}
-            <span className="font-bold text-white">{fmtInt(agentRequests)}</span> uncompensated requests every month.
-          </p>
+        {/* Money-math visualization: visits → AI share → requests → $ owed. */}
+        {!isLoadingVisits && (
+          <MoneyFlow
+            visits={visits}
+            aiPct={aiPct}
+            pricePerReq={pricePerReq}
+            agentRequests={agentRequests}
+            missedRevenue={missedRevenue}
+            flashAi={flashAi}
+            flashPrice={flashPrice}
+            flashVisits={flashVisits}
+            onVisitsChange={(n) => {
+              setVisits(n);
+              setFlashVisits((f) => f + 1);
+            }}
+          />
         )}
 
-        {/* Assumption sliders. */}
-        <div className={cn("mt-10 grid gap-6 sm:grid-cols-2 transition-opacity duration-500", isLoadingVisits ? "opacity-30 pointer-events-none" : "opacity-100")}>
+        {/* The levers that drive the flow above. */}
+        <div
+          className={cn(
+            "mt-10 grid gap-6 sm:grid-cols-2 transition-opacity duration-500",
+            isLoadingVisits ? "opacity-30 pointer-events-none" : "opacity-100",
+          )}
+        >
           <Slider
             label="AI-agent share of visits"
             value={`${aiPct}%`}
@@ -99,7 +206,10 @@ export default function EstimateDashboard({ url }: { url: string }) {
             max={60}
             step={1}
             raw={aiPct}
-            onChange={setAiPct}
+            onChange={(v) => {
+              setAiPct(v);
+              setFlashAi((f) => f + 1);
+            }}
           />
           <Slider
             label="Price per agent request"
@@ -108,43 +218,25 @@ export default function EstimateDashboard({ url }: { url: string }) {
             max={0.05}
             step={0.001}
             raw={pricePerReq}
-            onChange={setPricePerReq}
+            onChange={(v) => {
+              setPricePerReq(v);
+              setFlashPrice((f) => f + 1);
+            }}
           />
         </div>
 
-        {/* Revealed a couple seconds after the estimate renders. */}
-        {/* <div
-          className={cn(
-            "transition-all duration-700",
-            showExtras
-              ? "mt-6 max-h-96 opacity-100 translate-y-0"
-              : "max-h-0 opacity-0 translate-y-2 overflow-hidden pointer-events-none",
-          )}
-        >
-          <Slider
-            label="Monthly visits to your site"
-            value={fmtInt(visits)}
-            min={1000}
-            max={20000000}
-            step={1000}
-            raw={visits}
-            onChange={setVisits}
-          />
-        </div> */}
+        {/* Conversion CTA — visible immediately once the estimate lands. */}
+        {!isLoadingVisits && (
+          <div className="mt-12">
+            <EmailCapture url={url} />
+          </div>
+        )}
 
-        <div
-          className={cn(
-            "transition-all duration-700 delay-200",
-            showExtras ? "mt-12 opacity-100 translate-y-0" : "mt-0 opacity-0 translate-y-4 pointer-events-none",
-          )}
-        >
-          <Button asChild variant="b" size="lg">
-            <Link href="/sites">Munerate your content</Link>
-          </Button>
-          <p className="font-text mt-3 text-sm font-medium text-white/60">
-            Know exactly which agents are visiting your site — and get paid for it.
-          </p>
-        </div>
+        <p className="font-text mt-16 border-t border-neo-line pt-6 text-xs font-normal text-white/50">
+          Figures are AI-generated estimates based on public data and adjustable
+          assumptions. Actual AI-agent traffic and payouts will vary. AI can make
+          mistakes.
+        </p>
       </div>
     </section>
   );
