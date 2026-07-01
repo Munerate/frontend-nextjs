@@ -98,21 +98,21 @@ export default async function SitePage({ params }: PageProps<"/sites/[id]">) {
         </aside>
       </div>
 
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_minmax(0,34rem)] xl:gap-14">
+      {/* <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_minmax(0,34rem)] xl:gap-14">
         <section>
           <h2 className="font-display mb-1 text-lg font-extrabold uppercase tracking-tight text-neo-ink">Site configuration</h2>
           <p className="font-text mb-3 text-sm text-neo-ink/70">
             Crawl your site so Munerate can index your content for grounded ask/find.
           </p>
-          {/* Verify DNS / meta-tag ownership step is commented out for now.
+          Verify DNS / meta-tag ownership step is commented out for now.
           {!site.verified_at && (
             <VerifyPanel siteId={site.id} domain={site.domain} token={site.verify_token} />
           )}
-          */}
+         
           <MuneratePanel siteId={site.id} initialStatus={site.crawl_status} />
-          {/* <AskPanel siteId={site.id} /> */}
+          <AskPanel siteId={site.id} />
         </section>
-      </div>
+      </div> */}
     </div>
   );
 }
