@@ -22,36 +22,18 @@
               <td style="padding:32px 28px 8px 28px;">
                 <h1 style="margin:0 0 8px 0;font-size:22px;font-weight:800;color:#111111;letter-spacing:-0.02em;">Sign in to Munerate</h1>
                 <p style="margin:0 0 24px 0;font-size:15px;line-height:1.5;color:#555555;">
-                  Use the code below, or tap the button to sign in. This expires shortly and can only be used once.
+                  Enter this code on the sign-in screen. It expires shortly and can only be used once.
                 </p>
 
-                <!-- OTP code -->
+                <!-- OTP code. Intentionally code-only: no magic-link button. The
+                     6-digit code and a magic link share one single-use token, and
+                     mail link scanners (e.g. Zoho) prefetch links, consuming the
+                     token before the user types the code -> "otp_expired". -->
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                   <tr>
                     <td align="center" style="background-color:#f4f4f0;border:2px solid #111111;border-radius:10px;padding:18px;">
                       <div style="font-size:13px;font-weight:600;color:#888888;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;">Your code</div>
                       <div style="font-size:34px;font-weight:800;letter-spacing:0.35em;color:#111111;font-family:'SF Mono',SFMono-Regular,Menlo,Consolas,monospace;">{{ .Token }}</div>
-                    </td>
-                  </tr>
-                </table>
-
-                <!-- Divider -->
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:24px 0;">
-                  <tr>
-                    <td style="border-top:1px solid #e5e5e0;font-size:0;line-height:0;">&nbsp;</td>
-                    <td width="40" align="center" style="font-size:12px;color:#999999;text-transform:uppercase;white-space:nowrap;">or</td>
-                    <td style="border-top:1px solid #e5e5e0;font-size:0;line-height:0;">&nbsp;</td>
-                  </tr>
-                </table>
-
-                <!-- Magic link button -->
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td align="center">
-                      <a href="{{ .ConfirmationURL }}"
-                         style="display:inline-block;background-color:#111111;color:#ffffff;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:-0.01em;text-decoration:none;padding:14px 32px;border-radius:10px;">
-                        Sign in
-                      </a>
                     </td>
                   </tr>
                 </table>
