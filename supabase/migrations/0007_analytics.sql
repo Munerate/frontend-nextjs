@@ -67,6 +67,7 @@ alter table analytics_identities enable row level security;
 -- or stamped with the caller's own uid; nobody can spoof another user's uid. Under
 -- the anon key auth.uid() is null, forcing user_id null. identify rows must carry a
 -- real uid (an anonymous caller cannot assert an identity link).
+drop policy if exists "analytics_events insert" on analytics_events;
 create policy "analytics_events insert" on analytics_events
   for insert with check (
     (event_type <> 'identify' and (user_id is null or user_id = auth.uid()))
@@ -76,8 +77,10 @@ create policy "analytics_events insert" on analytics_events
 -- NO select/update/delete policy: write-only for clients. Reporting = Studio SQL editor.
 
 -- Identity link: only the authenticated caller may assert (anon_id -> their uid).
+drop policy if exists "analytics_identities upsert" on analytics_identities;
 create policy "analytics_identities upsert" on analytics_identities
   for insert with check (user_id = auth.uid());
+drop policy if exists "analytics_identities update" on analytics_identities;
 create policy "analytics_identities update" on analytics_identities
   for update using (user_id = auth.uid()) with check (user_id = auth.uid());
 
@@ -120,7 +123,8 @@ grant execute on function purge_analytics_for_user(uuid) to authenticated;
 create or replace view analytics_events_resolved
   with (security_invoker = on) as
 select e.*,
-       coalesce(e.user_id, i.user_id, e.anon_id) as visitor_key
+       -- user_id is uuid, anon_id is text: cast so COALESCE has one type.
+       coalesce(e.user_id::text, i.user_id::text, e.anon_id) as visitor_key
 from analytics_events e
 left join analytics_identities i on i.anon_id = e.anon_id;
 
