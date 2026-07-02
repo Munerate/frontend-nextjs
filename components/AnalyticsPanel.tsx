@@ -17,6 +17,7 @@ import {
   type SlimEvent,
   type TimeframeKey,
 } from "@/lib/analytics";
+import { track } from "@/lib/track";
 
 // Re-exported for back-compat: external code historically imported SlimEvent
 // from this module.
@@ -39,8 +40,10 @@ export default function AnalyticsPanel({
 }) {
   const [internalTimeframe, setInternalTimeframe] = useState<TimeframeKey>("all");
   const timeframe = controlledTimeframe ?? internalTimeframe;
-  const setTimeframe = (v: TimeframeKey) =>
+  const setTimeframe = (v: TimeframeKey) => {
+    track("analytics_timeframe_change", { timeframe: v }, { sample: 0.5 });
     (onTimeframeChange ?? setInternalTimeframe)(v);
+  };
   // Capture "now" once on mount so the cutoff is stable across re-renders.
   const [now] = useState(() => Date.now());
 

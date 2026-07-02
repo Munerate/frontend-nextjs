@@ -3,7 +3,25 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { track, clientIdentify } from "@/lib/track";
 import Brand from "@/components/Brand";
+
+// Categorise the post-login destination without leaking the raw next URL.
+function nextKind(next: string): "sites" | "sites_new" | "other" {
+  if (next.startsWith("/sites/new")) return "sites_new";
+  if (next.startsWith("/sites")) return "sites";
+  return "other";
+}
+
+// Best-effort short code from an auth error message (never the raw message).
+function authErrorCode(message: string | undefined): string {
+  const m = (message ?? "").toLowerCase();
+  if (m.includes("rate") || m.includes("too many")) return "rate_limited";
+  if (m.includes("expired")) return "otp_expired";
+  if (m.includes("invalid") || m.includes("token")) return "otp_invalid";
+  if (m.includes("network") || m.includes("fetch")) return "network";
+  return "unknown";
+}
 
 // Passwordless auth. Step 1: enter email → Supabase sends an email with both a
 // magic link and a code. Step 2: type the code → verifyOtp signs you in.
@@ -13,6 +31,7 @@ export default function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/sites";
+  const next_kind = nextKind(next);
 
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
@@ -29,6 +48,8 @@ export default function LoginForm() {
   async function sendCode(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
+    const email_domain = email.trim().toLowerCase().split("@")[1] ?? null;
+    track("login_send_code_attempt", { next_kind, email_domain });
     setMsg(null);
     const supabase = getSupabaseClient();
     const emailRedirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
@@ -40,15 +61,18 @@ export default function LoginForm() {
     });
     setBusy(false);
     if (error) {
+      track("login_send_code_error", { next_kind, error_code: authErrorCode(error.message) });
       setMsg(error.message);
       return;
     }
+    track("login_send_code_success", { next_kind, email_domain });
     setStep("code");
   }
 
   async function verifyCode(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
+    track("login_verify_attempt", { next_kind, code_len: code.trim().length });
     setMsg(null);
     const supabase = getSupabaseClient();
     const addr = email.trim().toLowerCase();
@@ -62,9 +86,11 @@ export default function LoginForm() {
     }
     setBusy(false);
     if (error) {
+      track("login_verify_error", { next_kind, error_code: authErrorCode(error.message) });
       setMsg(error.message);
       return;
     }
+    await clientIdentify(supabase, { next_kind, otp_type: "code" });
     router.replace(next);
     router.refresh();
   }
@@ -137,6 +163,7 @@ export default function LoginForm() {
         <button
           onClick={() => {
             if (step === "code") {
+              track("login_use_different_email", { next_kind });
               setStep("email");
               setCode("");
               setMsg(null);

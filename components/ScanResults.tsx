@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import BrandMark from "@/components/BrandMark";
+import { track, getAnonId, getSessionId } from "@/lib/track";
 import {
   CATEGORY_ORDER,
   type ScanResult,
@@ -35,7 +36,7 @@ export default function ScanResults({ domain }: { domain: string }) {
     fetch("/api/scan", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ domain }),
+      body: JSON.stringify({ domain, anon_id: getAnonId(), session_id: getSessionId() }),
     })
       .then(async (res) => {
         const data = await res.json();
@@ -44,12 +45,23 @@ export default function ScanResults({ domain }: { domain: string }) {
       })
       .then((data) => {
         if (!cancelled) {
+          const scored = data.checks.filter((c) => !c.informational);
+          track("scan_report_loaded", {
+            domain,
+            score: data.score,
+            passed: scored.filter((c) => c.status === "pass").length,
+            warnings: scored.filter((c) => c.status === "warn").length,
+            critical: scored.filter((c) => c.status === "fail").length,
+          });
           setResult(data);
           setSelected(data.checks[0]?.id ?? null);
         }
       })
       .catch((e) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Scan failed.");
+        if (!cancelled) {
+          track("scan_report_error", { domain, error_code: "scan_failed" });
+          setError(e instanceof Error ? e.message : "Scan failed.");
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -175,6 +187,9 @@ export default function ScanResults({ domain }: { domain: string }) {
           </div>
           <Link
             href={signInHref}
+            onClick={() =>
+              track("scan_install_cta_click", { domain, score: result.score })
+            }
             className="shrink-0 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-100"
           >
             Install Munerate →
@@ -201,7 +216,14 @@ export default function ScanResults({ domain }: { domain: string }) {
                       key={c.id}
                       check={c}
                       active={c.id === selected}
-                      onSelect={() => setSelected(c.id)}
+                      onSelect={() => {
+                        track(
+                          "scan_check_expand",
+                          { domain, check_id: c.id, status: c.status },
+                          { sample: 0.5 }
+                        );
+                        setSelected(c.id);
+                      }}
                     />
                   ))}
                 </div>

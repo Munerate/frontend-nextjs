@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button, buttonVariants } from "@/components/ui/button";
 import BrandMark from "@/components/BrandMark";
 import { cn } from "@/lib/utils";
+import { track } from "@/lib/track";
 
 // Loose "is this a domain?" check: after stripping any protocol and path, the
 // host must be at least two dot-separated labels (e.g. example.com). Accepts
@@ -42,8 +43,15 @@ export default function LandingHero({
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!valid) return; // guards keyboard submit (Enter) too
+    if (!valid) {
+      track("landing_domain_submit_blocked", {
+        reason: "invalid_domain",
+        input_len: domain.trim().length,
+      });
+      return; // guards keyboard submit (Enter) too
+    }
     const clean = domain.trim().replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+    track("landing_domain_submit", { domain: clean });
     start(() => {
       router.push(`/estimate?url=${encodeURIComponent(clean)}`);
     });

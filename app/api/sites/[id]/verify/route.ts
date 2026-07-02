@@ -1,5 +1,6 @@
 import { resolveTxt } from "dns/promises";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { logServerEvent } from "@/lib/track-server";
 
 export const runtime = "nodejs";
 
@@ -64,6 +65,14 @@ export async function POST(request: Request, ctx: RouteContext<"/api/sites/[id]/
   }
 
   if (!verified) {
+    await logServerEvent(
+      {
+        event_name: "site_verify_failed",
+        site_id: id,
+        props: { method, reason_code: "no_match" },
+      },
+      { supabase }
+    );
     return Response.json({ ok: false, error: detail });
   }
 
@@ -74,6 +83,15 @@ export async function POST(request: Request, ctx: RouteContext<"/api/sites/[id]/
   if (error) {
     return Response.json({ ok: false, error: error.message }, { status: 500 });
   }
+
+  await logServerEvent(
+    {
+      event_name: "verified",
+      site_id: id,
+      props: { method, domain: site.domain, detail_code: "matched" },
+    },
+    { supabase }
+  );
 
   return Response.json({ ok: true, detail });
 }

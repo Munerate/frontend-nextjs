@@ -11,6 +11,7 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { track } from "@/lib/track";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -23,6 +24,7 @@ export default function EmailCapture({ url }: { url: string }) {
     e.preventDefault();
     const trimmed = email.trim();
     if (!EMAIL_RE.test(trimmed)) {
+      track("claim_submit_invalid", { domain: url, reason: "invalid_email" });
       setErrorMsg("Please enter a valid email address.");
       setStatus("error");
       return;
@@ -31,6 +33,8 @@ export default function EmailCapture({ url }: { url: string }) {
     try {
       const supabase = getSupabaseClient();
       const normalizedEmail = trimmed.toLowerCase();
+      const email_domain = normalizedEmail.split("@")[1] ?? null;
+      track("claim_submit_attempt", { domain: url, email_domain });
 
       // Record the claim (waitlist analytics). Non-fatal if it fails.
       await supabase.from("claims").insert({ email: normalizedEmail, url });
@@ -50,12 +54,19 @@ export default function EmailCapture({ url }: { url: string }) {
         options: { shouldCreateUser: true, emailRedirectTo, data: { flow: "claim", domain: url } },
       });
       if (error) {
+        track("claim_submit_error", { domain: url, error_code: "otp_send_failed" });
         setErrorMsg(error.message || "Something went wrong. Please try again.");
         setStatus("error");
         return;
       }
+      track(
+        "claimed",
+        { domain: url, email_domain, flow: "claim" },
+        { immediate: true }
+      );
       setStatus("success");
     } catch {
+      track("claim_submit_error", { domain: url, error_code: "unknown" });
       setErrorMsg("Something went wrong. Please try again.");
       setStatus("error");
     }
