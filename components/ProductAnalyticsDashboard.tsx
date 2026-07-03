@@ -240,7 +240,7 @@ function VolumeChart({
   buckets: { label: string; events: number; visitors: number }[];
 }) {
   const W = 720;
-  const H = 200;
+  const H = 130;
   const padX = 4;
   const labelH = 22;
   const n = buckets.length;
@@ -260,7 +260,11 @@ function VolumeChart({
 
   return (
     <>
-      <svg viewBox={`0 0 ${W} ${H + labelH}`} className="mt-3 w-full" role="img">
+      <svg
+        viewBox={`0 0 ${W} ${H + labelH}`}
+        className="mt-3 w-full max-h-40"
+        role="img"
+      >
         <defs>
           <linearGradient id="pa-vol" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#245cff" stopOpacity={0.35} />
@@ -365,6 +369,22 @@ function Counts({
   );
 }
 
+const MONTHS = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+// Deterministic UTC formatter — avoids Intl (which can throw on minimal-ICU
+// runtimes) and avoids SSR/client hydration mismatches from differing locales.
+function fmtTime(ts: string | null | undefined): string {
+  if (!ts) return "—";
+  const d = new Date(ts);
+  if (Number.isNaN(d.getTime())) return "—";
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const mm = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${hh}:${mm}`;
+}
+
 function RecentTable({ rows }: { rows: ResolvedEvent[] }) {
   if (rows.length === 0) return null;
   return (
@@ -390,12 +410,7 @@ function RecentTable({ rows }: { rows: ResolvedEvent[] }) {
             {rows.map((r, i) => (
               <tr key={i} className="font-text border-t border-neo-line/60">
                 <td className="whitespace-nowrap px-5 py-2.5 tabular-nums text-neo-ink/50">
-                  {new Date(r.ts).toLocaleString(undefined, {
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {fmtTime(r.ts)}
                 </td>
                 <td className="px-5 py-2.5">
                   <span className="rounded-[5px] bg-neo-paper px-2 py-0.5 text-xs font-semibold text-neo-ink">
