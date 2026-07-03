@@ -167,7 +167,9 @@ function Kpi({
 }
 
 function Funnel({ funnel }: { funnel: ReturnType<typeof computeFunnel> }) {
-  const top = funnel[0]?.visitors ?? 0;
+  // Scale bars off the busiest stage, not the top: the top of the funnel can be
+  // empty (e.g. no `scanned` events yet) while later stages still have activity.
+  const peak = funnel.reduce((m, f) => Math.max(m, f.visitors), 0);
   return (
     <Card>
       <div className="mb-4 flex items-baseline justify-between">
@@ -178,57 +180,45 @@ function Funnel({ funnel }: { funnel: ReturnType<typeof computeFunnel> }) {
           distinct visitors reaching each stage
         </span>
       </div>
-      {top === 0 ? (
+      {peak === 0 ? (
         <p className="font-text py-8 text-center text-sm text-neo-ink/50">
           No funnel activity in this timeframe.
         </p>
       ) : (
-        <ul className="flex flex-col gap-2.5">
+        <div className="flex items-end gap-2 border-b border-neo-line pt-4">
           {funnel.map((f, i) => {
-            const width = top > 0 ? Math.max(3, (f.visitors / top) * 100) : 0;
+            const height =
+              f.visitors > 0 ? Math.max(4, (f.visitors / peak) * 100) : 0;
             return (
-              <li key={f.event}>
-                <div className="mb-1 flex items-baseline justify-between gap-3">
-                  <span className="font-text text-sm font-semibold text-neo-ink">
-                    <span className="mr-2 text-neo-ink/40 tabular-nums">
+              <div
+                key={f.event}
+                className="flex min-w-0 flex-1 flex-col items-center gap-2"
+              >
+                <span className="font-text text-sm font-bold tabular-nums text-neo-ink">
+                  {f.visitors.toLocaleString()}
+                </span>
+                <div className="flex h-40 w-full items-end">
+                  <div
+                    title={`${f.label}: ${f.visitors} (${Math.round(f.pctOfTop)}% of top)`}
+                    className="w-full rounded-t-[5px] bg-neo-main transition-[height] duration-500"
+                    style={{ height: `${height}%` }}
+                  />
+                </div>
+                <div className="flex flex-col items-center gap-0.5 pt-1.5 text-center">
+                  <span className="font-text text-xs font-semibold leading-tight text-neo-ink">
+                    <span className="mr-1 text-neo-ink/40 tabular-nums">
                       {i + 1}
                     </span>
                     {f.label}
-                    <span className="ml-2 text-xs font-normal text-neo-ink/50">
-                      {f.blurb}
-                    </span>
                   </span>
-                  <span className="font-text shrink-0 text-sm tabular-nums text-neo-ink/70">
-                    <span className="font-bold text-neo-ink">
-                      {f.visitors.toLocaleString()}
-                    </span>
-                    <span className="ml-2 text-xs text-neo-ink/50">
-                      {Math.round(f.pctOfTop)}%
-                    </span>
+                  <span className="font-text text-[11px] tabular-nums text-neo-ink/50">
+                    {Math.round(f.pctOfTop)}%
                   </span>
                 </div>
-                <div className="relative h-7 w-full overflow-hidden rounded-[6px] border border-neo-line bg-neo-paper">
-                  <div
-                    className="flex h-full items-center rounded-[5px] bg-neo-main px-2 transition-[width] duration-500"
-                    style={{ width: `${width}%` }}
-                  />
-                </div>
-                {i > 0 && (
-                  <div className="mt-1 flex justify-end gap-3">
-                    <span className="font-text text-[11px] tabular-nums text-emerald-400/80">
-                      {Math.round(f.pctOfPrev)}% of prev
-                    </span>
-                    {f.droppedFromPrev > 0 && (
-                      <span className="font-text text-[11px] tabular-nums text-rose-400/80">
-                        −{f.droppedFromPrev.toLocaleString()} dropped
-                      </span>
-                    )}
-                  </div>
-                )}
-              </li>
+              </div>
             );
           })}
-        </ul>
+        </div>
       )}
     </Card>
   );
