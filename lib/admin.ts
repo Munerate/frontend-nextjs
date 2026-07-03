@@ -7,7 +7,7 @@
 // address so the dashboard is never accidentally left world-open OR fully
 // locked out in a fresh environment.
 
-const FALLBACK_ADMINS = [];
+const FALLBACK_ADMINS: string[] = [];
 
 function adminList(): string[] {
   const raw = process.env.ADMIN_EMAILS;
