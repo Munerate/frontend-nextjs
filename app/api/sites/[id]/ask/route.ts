@@ -1,6 +1,7 @@
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { embedQuery } from "@/lib/embeddings";
 import { complete, MODELS } from "@/lib/claude";
+import { logServerEvent } from "@/lib/track-server";
 
 export const runtime = "nodejs";
 
@@ -40,6 +41,15 @@ export async function POST(request: Request, ctx: RouteContext<"/api/sites/[id]/
   const matches = (data ?? []) as MatchRow[];
 
   if (mode === "find") {
+    // Telemetry: never log the query text.
+    await logServerEvent(
+      {
+        event_name: "rag_query",
+        site_id: id,
+        props: { mode: "find", match_count: matches.length, has_answer: matches.length > 0 },
+      },
+      { supabase }
+    );
     return Response.json({
       ok: true,
       matches: matches.map((m) => ({
@@ -52,6 +62,15 @@ export async function POST(request: Request, ctx: RouteContext<"/api/sites/[id]/
   }
 
   if (matches.length === 0) {
+    // Telemetry: never log the query text.
+    await logServerEvent(
+      {
+        event_name: "rag_query",
+        site_id: id,
+        props: { mode: "ask", match_count: 0, has_answer: false },
+      },
+      { supabase }
+    );
     return Response.json({
       ok: true,
       answer:
@@ -76,5 +95,14 @@ export async function POST(request: Request, ctx: RouteContext<"/api/sites/[id]/
   });
 
   const sources = [...new Set(matches.map((m) => m.url))];
+  // Telemetry: never log the query text.
+  await logServerEvent(
+    {
+      event_name: "rag_query",
+      site_id: id,
+      props: { mode: mode ?? "ask", match_count: matches.length, has_answer: true },
+    },
+    { supabase }
+  );
   return Response.json({ ok: true, answer, sources });
 }

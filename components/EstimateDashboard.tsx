@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usd } from "@/lib/format";
@@ -11,6 +11,7 @@ import CountUp from "@/components/CountUp";
 import MoneyFlow from "@/components/MoneyFlow";
 import EmailCapture from "@/components/EmailCapture";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { track, getAnonId, getSessionId } from "@/lib/track";
 
 export default function EstimateDashboard({ url }: { url: string }) {
   const [aiPct, setAiPct] = useState(12);
@@ -33,6 +34,26 @@ export default function EstimateDashboard({ url }: { url: string }) {
   const [nowMs] = useState(() => Date.now());
   const effMonths = useMemo(() => effectiveMonthsSinceEpoch(nowMs), [nowMs]);
 
+  // Trailing-debounce slider tracking so exactly one settle event fires per
+  // drag (the live onChange above is untouched). Each slider gets its own timer.
+  const aiSettleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const priceSettleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function trackSliderSettle(
+    ref: React.MutableRefObject<ReturnType<typeof setTimeout> | null>,
+    slider: "ai_pct" | "price_per_req",
+    value: number,
+  ) {
+    if (ref.current !== null) clearTimeout(ref.current);
+    ref.current = setTimeout(() => {
+      ref.current = null;
+      track(
+        "estimate_slider_change",
+        { slider, value, domain: url },
+        { sample: 0.5 },
+      );
+    }, 500);
+  }
+
   useEffect(() => {
     let cancelled = false;
     const key = url.trim();
@@ -49,20 +70,35 @@ export default function EstimateDashboard({ url }: { url: string }) {
           .maybeSingle();
         if (cancelled) return;
         if (cached) {
-          setVisits(Number(cached.visits));
+          const cachedVisits = Number(cached.visits);
+          setVisits(cachedVisits);
+          track("estimate_visits_loaded", {
+            domain: url,
+            visits: cachedVisits,
+            source: "cache",
+          });
           return;
         }
 
         const res = await fetch("/api/estimate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url }),
+          body: JSON.stringify({
+            url,
+            anon_id: getAnonId(),
+            session_id: getSessionId(),
+          }),
         });
         if (cancelled) return;
         if (res.ok) {
           const data = await res.json();
           if (data.visits) {
             setVisits(data.visits);
+            track("estimate_visits_loaded", {
+              domain: url,
+              visits: data.visits,
+              source: "api",
+            });
             // Persist so future requests for the same URL reuse this estimate.
             // ignoreDuplicates avoids errors on concurrent first-loads.
             await supabase
@@ -141,7 +177,15 @@ export default function EstimateDashboard({ url }: { url: string }) {
             <button
               type="button"
               onClick={() =>
-                setView((v) => (v === "cumulative" ? "monthly" : "cumulative"))
+                setView((v) => {
+                  const next = v === "cumulative" ? "monthly" : "cumulative";
+                  track("estimate_view_toggle", {
+                    from: v,
+                    to: next,
+                    domain: url,
+                  });
+                  return next;
+                })
               }
               aria-label={
                 view === "cumulative"
@@ -209,6 +253,7 @@ export default function EstimateDashboard({ url }: { url: string }) {
             onChange={(v) => {
               setAiPct(v);
               setFlashAi((f) => f + 1);
+              trackSliderSettle(aiSettleTimer, "ai_pct", v);
             }}
           />
           <Slider
@@ -221,6 +266,7 @@ export default function EstimateDashboard({ url }: { url: string }) {
             onChange={(v) => {
               setPricePerReq(v);
               setFlashPrice((f) => f + 1);
+              trackSliderSettle(priceSettleTimer, "price_per_req", v);
             }}
           />
         </div>

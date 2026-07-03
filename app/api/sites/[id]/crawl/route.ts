@@ -1,5 +1,6 @@
 import { getSupabaseServer, getSupabaseAdmin } from "@/lib/supabase/server";
 import { embedDocuments, EMBED_DIM } from "@/lib/embeddings";
+import { logServerEvent } from "@/lib/track-server";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -25,6 +26,12 @@ export async function POST(_req: Request, ctx: RouteContext<"/api/sites/[id]/cra
 
   const admin = getSupabaseAdmin();
   await admin.from("sites").update({ crawl_status: "crawling" }).eq("id", id);
+  // Reuse the non-admin getSupabaseServer() client for telemetry (never the admin
+  // client — the service-role key is absent locally).
+  await logServerEvent(
+    { event_name: "crawl_started", site_id: id, props: { domain: site.domain } },
+    { supabase }
+  );
 
   try {
     const urls = await fetchSitemap(site.domain);
@@ -77,6 +84,14 @@ export async function POST(_req: Request, ctx: RouteContext<"/api/sites/[id]/cra
     }
 
     await admin.from("sites").update({ crawl_status: "ready" }).eq("id", id);
+    await logServerEvent(
+      {
+        event_name: "crawled",
+        site_id: id,
+        props: { pages_indexed: valid.length, chunk_count: chunkCount },
+      },
+      { supabase }
+    );
     return Response.json({
       ok: true,
       crawl_status: "ready",
@@ -84,6 +99,11 @@ export async function POST(_req: Request, ctx: RouteContext<"/api/sites/[id]/cra
     });
   } catch (e) {
     await admin.from("sites").update({ crawl_status: "error" }).eq("id", id);
+    const error_class = e instanceof Error ? e.name || "unknown" : "unknown";
+    await logServerEvent(
+      { event_name: "crawl_failed", site_id: id, props: { error_class } },
+      { supabase }
+    );
     return Response.json(
       { ok: false, error: e instanceof Error ? e.message : "Crawl failed" },
       { status: 500 }

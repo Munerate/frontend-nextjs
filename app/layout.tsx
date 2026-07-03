@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Archivo, Comfortaa, Inter } from "next/font/google";
 // global styles (neobrutalist tokens, ink-outline utility, animations)
 import "./globals.css";
+import PageViewTracker from "@/components/PageViewTracker";
 
 // Comfortaa → the wordmark. Archivo (heavy) → oversized neobrutalist display
 // headlines. Inter → landing body/UI copy (gives weight contrast against the
@@ -40,7 +41,10 @@ export default function RootLayout({
       lang="en"
       className={`h-full antialiased ${comfortaa.variable} ${archivo.variable} ${inter.variable}`}
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">
+        <PageViewTracker />
+        {children}
+      </body>
     </html>
   );
 }

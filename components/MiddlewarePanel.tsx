@@ -3,6 +3,7 @@
 import { useState } from "react";
 import CodeBlock from "./CodeBlock";
 import { middlewareSnippets } from "@/lib/middleware-snippet";
+import { track } from "@/lib/track";
 
 export default function MiddlewarePanel({
   siteId,
@@ -17,6 +18,7 @@ export default function MiddlewarePanel({
   const snippet = snippets.find((s) => s.id === active) ?? snippets[0];
 
   function download() {
+    track("middleware_download", { site_id: siteId, framework: snippet.id });
     const blob = new Blob([snippet.code], { type: "text/typescript" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -44,7 +46,14 @@ export default function MiddlewarePanel({
         {snippets.map((s) => (
           <button
             key={s.id}
-            onClick={() => setActive(s.id)}
+            onClick={() => {
+              track(
+                "middleware_framework_tab",
+                { site_id: siteId, framework: s.id },
+                { sample: 0.5 },
+              );
+              setActive(s.id);
+            }}
             className={
               "font-text rounded-neo px-3 py-1 text-sm font-semibold transition-colors " +
               (s.id === active

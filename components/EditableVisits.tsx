@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { fmtInt } from "@/lib/format";
+import { track } from "@/lib/track";
 
 const MAX_VISITS = 100_000_000_000;
 
@@ -33,13 +34,19 @@ export default function EditableVisits({
   }, [editing]);
 
   function begin() {
+    track("estimate_visits_edit_open", { current_value: Math.round(value) });
     setDraft(String(Math.round(value)));
     setEditing(true);
   }
 
   function commit() {
     const n = parseInt(draft, 10);
-    if (!Number.isNaN(n) && n > 0) onCommit(Math.min(n, MAX_VISITS));
+    if (!Number.isNaN(n) && n > 0) {
+      const clamped = n > MAX_VISITS;
+      const next = Math.min(n, MAX_VISITS);
+      track("estimate_visits_commit", { new_value: next, clamped });
+      onCommit(next);
+    }
     setEditing(false);
   }
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import { isAdmin } from "@/lib/admin";
 import SignOut from "@/components/SignOut";
 import Brand from "@/components/Brand";
 
@@ -35,6 +36,17 @@ export default async function DashboardLayout({
             </svg>
             Add domain
           </Link>
+          {isAdmin(user.email) && (
+            <Link
+              href="/analytics"
+              className="font-text flex items-center gap-2.5 rounded-neo px-2.5 py-2 text-sm font-semibold text-neo-ink transition-colors hover:bg-neo-card"
+            >
+              <svg className="h-4 w-4 text-field-b" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18h18M8 15l3-3 3 2 4-5" />
+              </svg>
+              Analytics
+            </Link>
+          )}
         </nav>
 
         <div className="font-text mt-6 mb-1.5 px-2.5 text-xs font-bold uppercase tracking-wider text-neo-ink/50">

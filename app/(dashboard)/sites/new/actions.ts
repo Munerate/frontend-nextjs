@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { buildInstallEmail } from "@/lib/install-email";
 import { sendMail } from "@/lib/mailer";
+import { logServerEvent } from "@/lib/track-server";
 
 function normalizeDomain(input: string): string {
   let d = input.trim().toLowerCase();
@@ -49,11 +50,31 @@ export async function createSiteForCurrentUser(
         .eq("owner_id", user.id)
         .eq("domain", domain)
         .single();
-      if (existing) return { id: existing.id, created: false };
+      if (existing) {
+        await logServerEvent(
+          {
+            event_name: "site_added",
+            user_id: user.id,
+            site_id: existing.id,
+            props: { domain, created: false },
+          },
+          { supabase }
+        );
+        return { id: existing.id, created: false };
+      }
     }
     return { error: error.message };
   }
 
+  await logServerEvent(
+    {
+      event_name: "site_added",
+      user_id: user.id,
+      site_id: data!.id,
+      props: { domain, created: true },
+    },
+    { supabase }
+  );
   return { id: data!.id, created: true };
 }
 
@@ -90,6 +111,15 @@ export async function sendInstallEmail(siteId: string): Promise<void> {
       origin,
     });
     await sendMail({ to: user.email, subject, html, text });
+    await logServerEvent(
+      {
+        event_name: "install_email_sent",
+        user_id: user.id,
+        site_id: siteId,
+        props: { domain: site.domain },
+      },
+      { supabase }
+    );
   } catch (err) {
     console.error("Failed to send install email:", err);
   }

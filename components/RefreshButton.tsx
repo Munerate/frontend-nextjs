@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import BrandMark from "@/components/BrandMark";
+import { track } from "@/lib/track";
 
 // Re-fetches the server component (latest events) without a full navigation.
 export default function RefreshButton() {
@@ -11,7 +12,10 @@ export default function RefreshButton() {
 
   return (
     <button
-      onClick={() => start(() => router.refresh())}
+      onClick={() => {
+        track("analytics_refresh_click");
+        start(() => router.refresh());
+      }}
       disabled={pending}
       title="Fetch latest data"
       className="font-text flex items-center gap-1.5 rounded-neo border-2 border-neo-frame px-3 py-1.5 text-sm font-semibold text-neo-ink transition-colors hover:bg-neo-card disabled:opacity-60"
