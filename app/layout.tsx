@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Archivo, Comfortaa, Inter } from "next/font/google";
 // global styles (neobrutalist tokens, ink-outline utility, animations)
 import "./globals.css";
@@ -76,6 +77,15 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans">
         <PageViewTracker />
         {children}
+        <Script id="mouseflow" strategy="afterInteractive">
+          {`window._mfq = window._mfq || [];
+(function() {
+  var mf = document.createElement("script");
+  mf.type = "text/javascript"; mf.defer = true;
+  mf.src = "//cdn.mouseflow.com/projects/fe450fe3-4405-48e9-bc7a-fcf71715b0b7.js";
+  document.getElementsByTagName("head")[0].appendChild(mf);
+})();`}
+        </Script>
       </body>
     </html>
   );
