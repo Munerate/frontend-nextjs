@@ -3,6 +3,7 @@ import { Archivo, Comfortaa, Inter } from "next/font/google";
 // global styles (neobrutalist tokens, ink-outline utility, animations)
 import "./globals.css";
 import PageViewTracker from "@/components/PageViewTracker";
+import { siteOrigin } from "@/lib/blog";
 
 // Comfortaa → the wordmark. Archivo (heavy) → oversized neobrutalist display
 // headlines. Inter → landing body/UI copy (gives weight contrast against the
@@ -27,8 +28,39 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Munerate",
-  description: "See what AI owes your site.",
+  metadataBase: new URL(siteOrigin()),
+  title: {
+    default: "Munerate — See what AI owes your site",
+    template: "%s — Munerate",
+  },
+  description:
+    "Munerate shows what AI owes your site: it classifies incoming traffic into humans, bots, AI crawlers, and vuln scans, verifies crawlers so spoofed user-agents get flagged, and turns your indexed content into grounded answers.",
+  keywords: [
+    "AI crawlers",
+    "bot detection",
+    "GPTBot",
+    "ClaudeBot",
+    "traffic classification",
+    "crawler verification",
+    "AI content licensing",
+    "web analytics",
+  ],
+  applicationName: "Munerate",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: "Munerate",
+    title: "Munerate — See what AI owes your site",
+    description:
+      "Classify humans, bots, AI crawlers, and vuln scans hitting your site — with verified crawlers so spoofs get flagged.",
+    url: siteOrigin(),
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Munerate — See what AI owes your site",
+    description:
+      "Classify humans, bots, AI crawlers, and vuln scans hitting your site — with verified crawlers so spoofs get flagged.",
+  },
 };
 
 export default function RootLayout({
