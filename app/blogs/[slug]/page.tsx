@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = getPost(slug);
   if (!post) return {};
-  const url = `${siteOrigin()}/blog/${slug}`;
+  const url = `${siteOrigin()}/blogs/${slug}`;
   const { title, description, keywords, ogImage, datePublished, dateModified } =
     post.meta;
   return {
@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 function jsonLd(slug: string) {
   const post = getPost(slug)!;
-  const url = `${siteOrigin()}/blog/${slug}`;
+  const url = `${siteOrigin()}/blogs/${slug}`;
   const { title, description, datePublished, dateModified, author } = post.meta;
 
   const graph: Record<string, unknown>[] = [
@@ -92,7 +92,7 @@ export default async function BlogPostPage({ params }: Props) {
       />
       <article className="mx-auto w-full max-w-4xl px-6 py-12 sm:px-10 sm:py-16">
         <Link
-          href="/blog"
+          href="/blogs"
           className="font-text text-sm font-medium text-neo-ink/50 hover:text-neo-ink"
         >
           ← All posts

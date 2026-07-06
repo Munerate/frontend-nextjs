@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Blog",
   description:
     "Guides on AI crawlers, bot detection, and getting value from the traffic hitting your site.",
-  alternates: { canonical: `${siteOrigin()}/blog` },
+  alternates: { canonical: `${siteOrigin()}/blogs` },
 };
 
 // Deterministic date label (no locale/timezone drift between server + client).
@@ -38,7 +38,7 @@ export default function BlogIndexPage() {
           {posts.map((post) => (
             <li key={post.meta.slug}>
               <Link
-                href={`/blog/${post.meta.slug}`}
+                href={`/blogs/${post.meta.slug}`}
                 className="block rounded-neo border-2 border-neo-frame bg-neo-card p-6 shadow-neo transition-transform hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-neo-lg"
               >
                 <time className="font-text text-xs font-medium uppercase tracking-wide text-neo-ink/50">

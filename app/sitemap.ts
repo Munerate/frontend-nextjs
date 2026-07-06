@@ -16,13 +16,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: origin, changeFrequency: "weekly", priority: 1 },
     {
-      url: `${origin}/blog`,
+      url: `${origin}/blogs`,
       lastModified: lastBlogChange,
       changeFrequency: "weekly",
       priority: 0.8,
     },
     ...posts.map((p) => ({
-      url: `${origin}/blog/${p.meta.slug}`,
+      url: `${origin}/blogs/${p.meta.slug}`,
       lastModified: p.meta.dateModified ?? p.meta.datePublished,
       changeFrequency: "monthly" as const,
       priority: 0.7,
