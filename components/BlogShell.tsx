@@ -19,7 +19,7 @@ export default function BlogShell({ children }: { children: React.ReactNode }) {
           />
           <div className="flex items-center gap-3">
             <Button asChild variant="neutral" size="sm">
-              <Link href="/blog">Blog</Link>
+              <Link href="/blogs">Blog</Link>
             </Button>
             <Button asChild size="sm">
               <Link href="/demo">Live demo</Link>
