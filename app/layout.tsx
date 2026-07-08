@@ -77,13 +77,22 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-sans">
         <PageViewTracker />
         {children}
-        <Script id="mouseflow-init" strategy="afterInteractive">
-          {`window._mfq = window._mfq || [];`}
-        </Script>
+
+        {/* Mouseflow Tracking Script */}
         <Script
-          id="mouseflow"
+          id="mouseflow-script"
           strategy="afterInteractive"
-          src="https://cdn.mouseflow.com/projects/fe450fe3-4405-48e9-bc7a-fcf71715b0b7.js"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window._mfq = window._mfq || [];
+              (function() {
+                var mf = document.createElement("script");
+                mf.type = "text/javascript"; mf.defer = true;
+                mf.src = "//cdn.mouseflow.com/projects/fe450fe3-4405-48e9-bc7a-fcf71715b0b7.js";
+                document.getElementsByTagName("head")[0].appendChild(mf);
+              })();
+            `,
+          }}
         />
       </body>
     </html>
