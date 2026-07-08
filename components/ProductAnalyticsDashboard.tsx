@@ -19,10 +19,27 @@ import {
 // Data is pre-fetched server-side (RLS-bypassing admin read) and passed in raw so
 // every timeframe recomputes instantly on the client without a round-trip.
 
+export type VisitEstimate = {
+  url: string;
+  visits: number;
+  created_at: string;
+};
+
+export type Claim = {
+  id: string;
+  email: string;
+  url: string | null;
+  created_at: string;
+};
+
 export default function ProductAnalyticsDashboard({
   events,
+  estimates = [],
+  claims = [],
 }: {
   events: ResolvedEvent[];
+  estimates?: VisitEstimate[];
+  claims?: Claim[];
 }) {
   const [timeframe, setTimeframe] = useState<TimeframeKey>("30d");
   const [now] = useState(() => Date.now());
@@ -96,27 +113,27 @@ export default function ProductAnalyticsDashboard({
         />
       </div>
 
-      {/* funnel — the headline surface */}
-      <Funnel funnel={funnel} />
-
-      {/* volume over time */}
-      <Card>
-        <div className="mb-1 flex items-baseline justify-between">
-          <h3 className="font-display text-sm font-extrabold uppercase tracking-tight text-neo-ink">
-            Activity over time
-          </h3>
-          <span className="font-text text-xs text-neo-ink/50">
-            {hourly ? "hourly" : "daily"}
-          </span>
-        </div>
-        {volume.length === 0 ? (
-          <p className="font-text py-12 text-center text-sm text-neo-ink/50">
-            No activity in this timeframe.
-          </p>
-        ) : (
-          <VolumeChart buckets={volume} />
-        )}
-      </Card>
+      {/* funnel + volume over time */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <Funnel funnel={funnel} />
+        <Card>
+          <div className="mb-1 flex items-baseline justify-between">
+            <h3 className="font-display text-sm font-extrabold uppercase tracking-tight text-neo-ink">
+              Activity over time
+            </h3>
+            <span className="font-text text-xs text-neo-ink/50">
+              {hourly ? "hourly" : "daily"}
+            </span>
+          </div>
+          {volume.length === 0 ? (
+            <p className="font-text py-12 text-center text-sm text-neo-ink/50">
+              No activity in this timeframe.
+            </p>
+          ) : (
+            <VolumeChart buckets={volume} />
+          )}
+        </Card>
+      </div>
 
       {/* breakdowns */}
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
@@ -125,8 +142,12 @@ export default function ProductAnalyticsDashboard({
         <Counts title="Devices" data={devices} total={kpis.totalEvents} />
       </div>
 
-      {/* recent activity */}
-      <RecentTable rows={recent} />
+      {/* recent activity + visit estimates + claims */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+        <RecentTable rows={recent} />
+        <EstimatesTable rows={estimates} />
+        <ClaimsTable rows={claims} />
+      </div>
     </div>
   );
 }
@@ -420,6 +441,125 @@ function RecentTable({ rows }: { rows: ResolvedEvent[] }) {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function EstimatesTable({ rows }: { rows: VisitEstimate[] }) {
+  // Server already orders by created_at desc; re-sort defensively so the newest
+  // estimate is always first regardless of source ordering.
+  const sorted = useMemo(
+    () =>
+      [...rows].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      ),
+    [rows],
+  );
+
+  return (
+    <div className="rounded-neo border-2 border-neo-frame bg-neo-card shadow-neo">
+      <div className="flex items-center justify-between px-5 py-3">
+        <h4 className="font-display text-xs font-extrabold uppercase tracking-wide text-neo-ink/70">
+          Visit estimates
+        </h4>
+        <span className="font-text text-xs text-neo-ink/40">{sorted.length} total</span>
+      </div>
+      {sorted.length === 0 ? (
+        <p className="font-text border-t border-neo-line px-5 py-8 text-center text-sm text-neo-ink/50">
+          No estimates yet.
+        </p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="font-text border-t border-neo-line text-left text-[11px] uppercase tracking-wide text-neo-ink/40">
+                <th className="px-5 py-2 font-bold">Created</th>
+                <th className="px-5 py-2 font-bold">URL</th>
+                <th className="px-5 py-2 text-right font-bold">Est. monthly visits</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((r) => (
+                <tr key={r.url} className="font-text border-t border-neo-line/60">
+                  <td className="whitespace-nowrap px-5 py-2.5 tabular-nums text-neo-ink/50">
+                    {fmtTime(r.created_at)}
+                  </td>
+                  <td
+                    className="max-w-[24rem] truncate px-5 py-2.5 font-mono text-xs text-neo-ink/70"
+                    title={r.url}
+                  >
+                    {r.url}
+                  </td>
+                  <td className="px-5 py-2.5 text-right tabular-nums text-neo-ink">
+                    {Number(r.visits).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ClaimsTable({ rows }: { rows: Claim[] }) {
+  // Server already orders by created_at desc; re-sort defensively so the newest
+  // claim is always first regardless of source ordering.
+  const sorted = useMemo(
+    () =>
+      [...rows].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      ),
+    [rows],
+  );
+
+  return (
+    <div className="rounded-neo border-2 border-neo-frame bg-neo-card shadow-neo">
+      <div className="flex items-center justify-between px-5 py-3">
+        <h4 className="font-display text-xs font-extrabold uppercase tracking-wide text-neo-ink/70">
+          Claims
+        </h4>
+        <span className="font-text text-xs text-neo-ink/40">{sorted.length} total</span>
+      </div>
+      {sorted.length === 0 ? (
+        <p className="font-text border-t border-neo-line px-5 py-8 text-center text-sm text-neo-ink/50">
+          No claims yet.
+        </p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="font-text border-t border-neo-line text-left text-[11px] uppercase tracking-wide text-neo-ink/40">
+                <th className="px-5 py-2 font-bold">Created</th>
+                <th className="px-5 py-2 font-bold">Email</th>
+                <th className="px-5 py-2 font-bold">URL</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((r) => (
+                <tr key={r.id} className="font-text border-t border-neo-line/60">
+                  <td className="whitespace-nowrap px-5 py-2.5 tabular-nums text-neo-ink/50">
+                    {fmtTime(r.created_at)}
+                  </td>
+                  <td
+                    className="max-w-[16rem] truncate px-5 py-2.5 text-neo-ink/70"
+                    title={r.email}
+                  >
+                    {r.email}
+                  </td>
+                  <td
+                    className="max-w-[16rem] truncate px-5 py-2.5 font-mono text-xs text-neo-ink/70"
+                    title={r.url ?? ""}
+                  >
+                    {r.url || "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { getSupabaseServer, getSupabaseAdmin } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/admin";
 import ProductAnalyticsDashboard from "@/components/ProductAnalyticsDashboard";
 import type { ResolvedEvent } from "@/lib/product-analytics";
+import type { VisitEstimate, Claim } from "@/components/ProductAnalyticsDashboard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,13 +22,29 @@ export default async function AnalyticsPage() {
   // security-invoker view honours the querying role; the admin client is
   // service-role, so it returns the stitched visitor_key rows we need.
   const admin = getSupabaseAdmin();
-  const { data } = await admin
-    .from("analytics_events_resolved")
-    .select("ts, event_name, event_type, source, path, device_type, visitor_key")
-    .order("ts", { ascending: false })
-    .limit(20000);
+  const [{ data }, { data: estimatesData }, { data: claimsData }] = await Promise.all([
+    admin
+      .from("analytics_events_resolved")
+      .select("ts, event_name, event_type, source, path, device_type, visitor_key")
+      .order("ts", { ascending: false })
+      .limit(20000),
+    admin
+      .from("visit_estimates")
+      .select("url, visits, created_at")
+      .order("created_at", { ascending: false })
+      .limit(500),
+    admin
+      .from("claims")
+      .select("id, email, url, created_at")
+      .order("created_at", { ascending: false })
+      .limit(500),
+  ]);
 
   const events = (data ?? []) as ResolvedEvent[];
+  const estimates = (estimatesData ?? []) as VisitEstimate[];
+  const claims = (claimsData ?? []) as Claim[];
 
-  return <ProductAnalyticsDashboard events={events} />;
+  return (
+    <ProductAnalyticsDashboard events={events} estimates={estimates} claims={claims} />
+  );
 }
