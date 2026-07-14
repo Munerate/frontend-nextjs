@@ -70,33 +70,34 @@ export default async function SitePage({ params }: PageProps<"/sites/[id]">) {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_minmax(0,34rem)] xl:gap-14">
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <div>
-              <h2 className="font-display text-lg font-extrabold uppercase tracking-tight text-neo-ink">Analytics</h2>
-            </div>
-            <RefreshButton />
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <div>
+            <h2 className="font-display text-lg font-extrabold uppercase tracking-tight text-neo-ink">Analytics</h2>
           </div>
+          <RefreshButton />
+        </div>
 
-          {rows.length === 0 ? (
-            <div className="rounded-neo border-2 border-dashed border-neo-frame bg-neo-card p-8 text-center">
-              <p className="font-text text-sm text-neo-ink/80">
-                Waiting for events to be triggered from your client…
-              </p>
-              <p className="font-text mt-1 text-xs text-neo-ink/50">
-                Install the middleware on the right, then hit Refresh once traffic arrives.
-              </p>
-            </div>
-          ) : (
-            <AnalyticsPanel events={rows} />
-          )}
-        </section>
+        {rows.length === 0 ? (
+          <div className="rounded-neo border-2 border-dashed border-neo-frame bg-neo-card p-8 text-center">
+            <p className="font-text text-sm text-neo-ink/80">
+              Waiting for events to be triggered from your client…
+            </p>
+            <p className="font-text mt-1 text-xs text-neo-ink/50">
+              Install Munerate below, then hit Refresh once traffic arrives.
+            </p>
+          </div>
+        ) : (
+          <AnalyticsPanel events={rows} />
+        )}
+      </section>
 
-        <aside className="rounded-neo border-2 border-neo-frame bg-neo-card p-6 shadow-neo lg:self-start">
+      {/* Install steps only show until the first events arrive. */}
+      {rows.length === 0 && (
+        <aside className="rounded-neo border-2 border-neo-frame bg-neo-card p-6 shadow-neo">
           <MiddlewarePanel siteId={site.id} tag={site.site_tag} origin={origin} />
         </aside>
-      </div>
+      )}
 
       {/* <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_minmax(0,34rem)] xl:gap-14">
         <section>

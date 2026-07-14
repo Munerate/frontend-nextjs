@@ -8,7 +8,30 @@
 // drops into Next.js, Cloudflare Workers, Hono, or any Node server.
 const INGEST_ORIGIN = "https://munerate-ingest-server.onrender.com";
 
-export type Framework = "next" | "cloudflare";
+/** The npm package customers install. */
+export const PACKAGE = "@munerate/bot-id";
+
+export type PackageManager = "npm" | "pnpm" | "yarn";
+
+export const PACKAGE_MANAGERS: { id: PackageManager; label: string }[] = [
+  { id: "npm", label: "npm" },
+  { id: "pnpm", label: "pnpm" },
+  { id: "yarn", label: "yarn" },
+];
+
+/** The install command for a given package manager. */
+export function installCommand(pm: PackageManager): string {
+  switch (pm) {
+    case "pnpm":
+      return `pnpm add ${PACKAGE}`;
+    case "yarn":
+      return `yarn add ${PACKAGE}`;
+    default:
+      return `npm install ${PACKAGE}`;
+  }
+}
+
+export type Framework = "edge" | "nextjs" | "cloudflare";
 
 export type FrameworkSnippet = {
   id: Framework;
@@ -19,9 +42,14 @@ export type FrameworkSnippet = {
   install: string;
   /** Suggested filename when downloading. */
   filename: string;
-  /** Generated source. */
+  /** Generated source for a brand-new file. */
   code: string;
+  /** Ordered pieces to merge into an existing file, each with placement help. */
+  mergeParts: { label: string; code: string }[];
 };
+
+const IMPORT_LINE =
+  "import { detectBot, buildPayload, sendDetectEvent } from '@munerate/bot-id';";
 
 function configBlock(siteId: string, tag: string): string {
   return `const botIdConfig = {
@@ -31,39 +59,78 @@ function configBlock(siteId: string, tag: string): string {
 };`;
 }
 
-function edgeSnippet(siteId: string, tag: string): string {
-  return `import { detectBot, isVulnScan, buildPayload, sendDetectEvent } from '@munerate/bot-id';
-
-${configBlock(siteId, tag)}
-
-// Edge middleware for any framework on platforms like Vercel, AWS Amplify,
-// Netlify, or self-hosted. Return a Response to block, or nothing to pass through.
-export default function middleware(request: Request, event: any) {
-  const url = new URL(request.url);
+// The detection block that goes inside the request handler. `event.waitUntil`
+// keeps the request alive for the fire-and-forget send.
+const DETECT_BODY = `  const url = new URL(request.url);
   const bot = detectBot(request.headers.get('user-agent') || '');
-  const blocked = isVulnScan(url.pathname);
 
-  if (bot || blocked) {
-    const payload = buildPayload(request, botIdConfig, url.pathname, blocked);
+  if (bot) {
+    const payload = buildPayload(request, botIdConfig, url.pathname, false, bot);
     const send = sendDetectEvent(botIdConfig, payload, botIdConfig.siteTag).catch(() => {});
-    // keep the request alive past the response for the fire-and-forget send
     if (event?.waitUntil) event.waitUntil(send);
-  }
+  }`;
 
-  if (blocked) {
-    return new Response(null, { status: 403 });
-  }
-  // returning nothing lets the request pass through normally
-}
-
-export const config = {
+const EDGE_CONFIG = `export const config = {
   // run on document requests, skip static assets
   matcher: ['/((?!assets|favicon\\\\.ico).*)'],
 };`;
+
+function edgeSnippet(siteId: string, tag: string, nextjs = false): string {
+  // The only Next.js-specific bits are the typed `event` (NextFetchEvent, which
+  // carries waitUntil) and its import. The generic version keeps `event: any` so
+  // it drops into any Web-standard middleware without framework imports.
+  const typeImport = nextjs
+    ? `import type { NextFetchEvent } from 'next/server';\n`
+    : "";
+  // Next.js 16 renamed the `middleware` convention to `proxy` (file proxy.ts,
+  // function `proxy`). Other hosts still use the `middleware` default export.
+  const signature = nextjs
+    ? "export default function proxy(request: Request, event: NextFetchEvent) {"
+    : "export default function middleware(request: Request, event: any) {";
+  const intro = nextjs
+    ? "// Next.js Proxy (formerly middleware). Detects bots, then passes through."
+    : `// Edge middleware for any framework on platforms like Vercel, AWS Amplify,
+// Netlify, or self-hosted. Detects bots, then passes through.`;
+
+  return `${IMPORT_LINE}
+${typeImport}
+${configBlock(siteId, tag)}
+
+${intro}
+${signature}
+${DETECT_BODY}
+
+  // returning nothing lets the request pass through normally
+}
+
+${EDGE_CONFIG}`;
+}
+
+function edgeMerge(
+  siteId: string,
+  tag: string,
+  nextjs = false,
+): { label: string; code: string }[] {
+  const fnName = nextjs ? "proxy" : "middleware";
+  const imports = nextjs
+    ? `${IMPORT_LINE}\nimport type { NextFetchEvent } from 'next/server';`
+    : IMPORT_LINE;
+  return [
+    { label: "Add these imports at the top of your file", code: imports },
+    { label: "Add this config near the top of the file", code: configBlock(siteId, tag) },
+    {
+      label: `Paste these lines inside your existing ${fnName}() function (it must receive \`request\` and \`event\`)`,
+      code: DETECT_BODY,
+    },
+    {
+      label: "If you don't already have a matcher, add this so it runs on page requests",
+      code: EDGE_CONFIG,
+    },
+  ];
 }
 
 function cloudflareSnippet(siteId: string, tag: string): string {
-  return `import { detectBot, isVulnScan, buildPayload, sendDetectEvent } from '@munerate/bot-id';
+  return `${IMPORT_LINE}
 
 ${configBlock(siteId, tag)}
 
@@ -71,29 +138,54 @@ export default {
   async fetch(request: Request, _env: unknown, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     const bot = detectBot(request.headers.get('user-agent') || '');
-    const blocked = isVulnScan(url.pathname);
 
-    if (bot || blocked) {
-      const payload = buildPayload(request, botIdConfig, url.pathname, blocked);
+    if (bot) {
+      const payload = buildPayload(request, botIdConfig, url.pathname, false, bot);
       // keep the request alive past the response for the fire-and-forget send
       ctx.waitUntil(sendDetectEvent(botIdConfig, payload, botIdConfig.siteTag).catch(() => {}));
     }
 
-    if (blocked) return new Response(null, { status: 403 });
     return fetch(request); // pass through to your origin / next handler
   },
 };`;
 }
 
+function cloudflareMerge(siteId: string, tag: string): { label: string; code: string }[] {
+  return [
+    { label: "Add this import at the top of your Worker file", code: IMPORT_LINE },
+    { label: "Add this config near the top", code: configBlock(siteId, tag) },
+    {
+      label: "Paste these lines inside your existing fetch() handler, before you return the response",
+      code: `    const url = new URL(request.url);
+    const bot = detectBot(request.headers.get('user-agent') || '');
+
+    if (bot) {
+      const payload = buildPayload(request, botIdConfig, url.pathname, false, bot);
+      ctx.waitUntil(sendDetectEvent(botIdConfig, payload, botIdConfig.siteTag).catch(() => {}));
+    }`,
+    },
+  ];
+}
+
 export function middlewareSnippets(siteId: string, tag: string): FrameworkSnippet[] {
   return [
     {
-      id: "next",
+      id: "edge",
       label: "Edge Middleware",
       description: "Server-side bot detection for Vercel, AWS Amplify, Netlify, self-hosted",
       install: "npm install @munerate/bot-id",
       filename: "middleware.ts",
       code: edgeSnippet(siteId, tag),
+      mergeParts: edgeMerge(siteId, tag),
+    },
+    {
+      id: "nextjs",
+      label: "Next.js",
+      description: "Proxy (formerly middleware) with typed NextFetchEvent for Next.js 16+",
+      install: "npm install @munerate/bot-id",
+      filename: "proxy.ts",
+      code: edgeSnippet(siteId, tag, true),
+      mergeParts: edgeMerge(siteId, tag, true),
     },
     {
       id: "cloudflare",
@@ -102,6 +194,7 @@ export function middlewareSnippets(siteId: string, tag: string): FrameworkSnippe
       install: "npm install @munerate/bot-id",
       filename: "worker.ts",
       code: cloudflareSnippet(siteId, tag),
+      mergeParts: cloudflareMerge(siteId, tag),
     },
   ];
 }
