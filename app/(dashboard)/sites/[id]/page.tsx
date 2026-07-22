@@ -6,6 +6,7 @@ import MuneratePanel from "@/components/MuneratePanel";
 import AskPanel from "@/components/AskPanel";
 import AnalyticsPanel from "@/components/AnalyticsPanel";
 import MiddlewarePanel from "@/components/MiddlewarePanel";
+import TestMiddlewarePanel from "@/components/TestMiddlewarePanel";
 import RefreshButton from "@/components/RefreshButton";
 
 export const runtime = "nodejs";
@@ -50,7 +51,7 @@ export default async function SitePage({ params }: PageProps<"/sites/[id]">) {
   const rows = (events ?? []) as EventRow[];
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex w-full flex-col gap-8">
       <div>
         <div className="flex items-center gap-3">
             <img
@@ -96,6 +97,12 @@ export default async function SitePage({ params }: PageProps<"/sites/[id]">) {
       {rows.length === 0 && (
         <aside className="rounded-neo border-2 border-neo-frame bg-neo-card p-6 shadow-neo">
           <MiddlewarePanel siteId={site.id} tag={site.site_tag} origin={origin} />
+        </aside>
+      )}
+
+      {rows.length === 0 && (
+        <aside className="rounded-neo border-2 border-neo-frame bg-neo-card p-6 shadow-neo">
+          <TestMiddlewarePanel siteId={site.id} domain={site.domain} />
         </aside>
       )}
 

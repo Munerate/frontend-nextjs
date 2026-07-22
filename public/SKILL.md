@@ -9,7 +9,7 @@ Munerate detects bot, AI-crawler, and vuln-scan traffic on your site and provide
 grounded ask/find over your indexed content.
 
 `apiEndpoint` for this deployment is the standalone ingestion server:
-`https://munerate-ingest-server.onrender.com/api/detect`.
+`https://munerate-ingest-server.onrender.com`.
 
 ## Steps
 
@@ -30,31 +30,43 @@ grounded ask/find over your indexed content.
    **Next.js** — create `middleware.ts` at your project root:
 
    ```ts
-   import { NextResponse } from 'next/server';
-   import type { NextRequest } from 'next/server';
-   import { detectBot, isVulnScan, buildPayload, sendDetectEvent } from '@munerate/bot-id';
+   import { NextResponse } from "next/server";
+   import type { NextRequest } from "next/server";
+   import {
+     detectBot,
+     isVulnScan,
+     buildPayload,
+     sendDetectEvent,
+   } from "@munerate/bot-id";
 
    const botIdConfig = {
-     siteId: '<SITE_TAG>',
-     apiEndpoint: 'https://munerate-ingest-server.onrender.com/api/detect',
-     siteTag: '<SITE_TAG>',
+     siteId: "<SITE_TAG>",
+     apiEndpoint: "https://munerate-ingest-server.onrender.com",
+     siteTag: "<SITE_TAG>",
    };
 
    export async function middleware(request: NextRequest) {
      const url = new URL(request.url);
-     const bot = detectBot(request.headers.get('user-agent') || '');
+     const bot = detectBot(request.headers.get("user-agent") || "");
      const blocked = isVulnScan(url.pathname);
 
      if (bot || blocked) {
-       const payload = buildPayload(request, botIdConfig, url.pathname, blocked);
-       sendDetectEvent(botIdConfig, payload, botIdConfig.siteTag).catch(() => {});
+       const payload = buildPayload(
+         request,
+         botIdConfig,
+         url.pathname,
+         blocked,
+       );
+       sendDetectEvent(botIdConfig, payload, botIdConfig.siteTag).catch(
+         () => {},
+       );
      }
 
      if (blocked) return new NextResponse(null, { status: 403 });
      return NextResponse.next();
    }
 
-   export const config = { matcher: '/:path*' };
+   export const config = { matcher: "/:path*" };
    ```
 
    Replace both `<SITE_TAG>` values with your tag. The `apiEndpoint` already points
@@ -62,10 +74,10 @@ grounded ask/find over your indexed content.
 
    **Other frameworks** — the pattern is identical: call `detectBot(ua)` and
    `isVulnScan(pathname)`, and on a hit `buildPayload(request, config, pathname,
-   blocked)` + fire-and-forget `sendDetectEvent(...)`, returning a 403 when
+blocked)` + fire-and-forget `sendDetectEvent(...)`, returning a 403 when
    `blocked`. On Cloudflare Workers wrap the send in `ctx.waitUntil(...)`; in
    Hono use `c.req.raw`; in Express adapt `req` into a `new Request(url, {
-   headers })`. The dashboard's install panel emits each of these verbatim.
+headers })`. The dashboard's install panel emits each of these verbatim.
 
 3. **Optional — Munerate the site.** On a verified domain, click **Munerate** to crawl
    `/sitemap.xml`, chunk, and embed your pages. Once status is `ready`, use **Ask** for

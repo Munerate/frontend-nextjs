@@ -54,7 +54,7 @@ const IMPORT_LINE =
 function configBlock(siteId: string, tag: string): string {
   return `const botIdConfig = {
   siteId: '${siteId}',
-  apiEndpoint: '${INGEST_ORIGIN}/api/detect',
+  apiEndpoint: '${INGEST_ORIGIN}',
   siteTag: '${tag}',
 };`;
 }

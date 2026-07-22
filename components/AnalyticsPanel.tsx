@@ -24,6 +24,8 @@ import { track } from "@/lib/track";
 export type { SlimEvent };
 
 const MAX_BOTS = 6;
+// Thin breakdown cards get padded with skeleton rows up to this many entries.
+const MIN_ROWS = 5;
 
 export default function AnalyticsPanel({
   events,
@@ -150,7 +152,7 @@ export default function AnalyticsPanel({
       </div>
 
       {/* Breakdown cards */}
-      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+      <div className="mt-4 grid grid-cols-3 gap-3 lg:grid-cols-3">
         <Counts title="Top bots" data={rankedBots.slice(0, 8)} colorFor={colorFor} total={totalForBars} />
         <Counts title="Categories" data={byCategory} total={totalForBars} />
         <Counts title="Providers" data={topProviders} total={totalForBars} />
@@ -356,10 +358,12 @@ function Counts({
   mono?: boolean;
 }) {
   const max = Math.max(...data.map(([, n]) => n), 1);
+  // Pad thin cards with skeleton rows so users see the shape of what will
+  // appear here once more data arrives.
+  const placeholders = Math.max(0, MIN_ROWS - data.length);
   return (
     <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
       <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">{title}</h4>
-      {data.length === 0 && <p className="text-sm text-zinc-600">No data yet.</p>}
       <ul className="flex flex-col gap-2.5">
         {data.map(([label, n]) => (
           <li key={label} className="flex flex-col gap-1.5">
@@ -384,8 +388,25 @@ function Counts({
             </div>
           </li>
         ))}
+        {Array.from({ length: placeholders }).map((_, i) => (
+          <PlaceholderRow key={`ph-${i}`} mono={mono} />
+        ))}
       </ul>
     </div>
+  );
+}
+
+function PlaceholderRow({ mono }: { mono?: boolean }) {
+  return (
+    <li className="flex flex-col gap-1.5" aria-hidden>
+      <div className="flex items-baseline justify-between gap-2 text-sm">
+        <span
+          className={`h-3 rounded bg-white/5 ${mono ? "w-20" : "w-28"}`}
+        />
+        <span className="h-3 w-10 rounded bg-white/5" />
+      </div>
+      <div className="h-1 w-full overflow-hidden rounded-full bg-white/3" />
+    </li>
   );
 }
 
