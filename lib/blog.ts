@@ -6,6 +6,7 @@
 // trivially machine-readable for JSON-LD structured data.
 
 import { post as knowIfAiCrawlersScraping } from "./posts/how-to-know-if-ai-is-eating-my-content";
+import { post as monitorAiScrapers } from "./posts/monitor-ai-scrapers-training-on-your-site";
 
 export type Block =
   | { type: "p"; text: string }
@@ -35,7 +36,7 @@ export type Post = {
 };
 
 // Newest first. Add new posts to this array.
-export const posts: Post[] = [knowIfAiCrawlersScraping];
+export const posts: Post[] = [monitorAiScrapers, knowIfAiCrawlersScraping];
 
 export function getAllPosts(): Post[] {
   return [...posts].sort(
