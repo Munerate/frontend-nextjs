@@ -1,9 +1,41 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { SESSION_COOKIE, verifySession } from "@/lib/auth/jwt";
+import { isAdmin } from "@/lib/auth/allowlist";
 
 // Next.js 16: Middleware is now "Proxy". Refreshes the Supabase session and
 // guards the (dashboard) route group with an optimistic auth check.
 export async function proxy(request: NextRequest) {
+  // Investors portal — its own JWT (jose) auth, independent of Supabase. Handle
+  // it up front and return before the Supabase session logic runs, so the two
+  // auth systems never interfere. /investors (gate) and /api/investors/* are
+  // public here (the API routes self-authenticate); only /investors/access and
+  // /investors/admin are gated.
+  const invPath = request.nextUrl.pathname;
+  if (invPath.startsWith("/investors") || invPath.startsWith("/api/investors")) {
+    const gated =
+      invPath.startsWith("/investors/access") ||
+      invPath.startsWith("/investors/admin");
+    if (!gated) return NextResponse.next({ request });
+
+    const token = request.cookies.get(SESSION_COOKIE)?.value;
+    const email = token ? await verifySession(token) : null;
+    if (!email) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/investors";
+      url.search = "";
+      url.searchParams.set("from", invPath);
+      return NextResponse.redirect(url);
+    }
+    if (invPath.startsWith("/investors/admin") && !isAdmin(email)) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/investors/access";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

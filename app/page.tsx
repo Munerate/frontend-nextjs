@@ -29,6 +29,14 @@ export default async function Home() {
             barFill="var(--neo-on-primary)"
           />
           <div className="flex items-center gap-3">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="text-white/70 hover:bg-white/10 hover:text-white"
+            >
+              <Link href="/investors">Investors</Link>
+            </Button>
             <Button asChild variant="neutral" size="sm">
               <Link href={user ? "/sites" : "/login"}>
                 {user ? "Dashboard" : "Sign in"}
