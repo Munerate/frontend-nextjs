@@ -271,3 +271,144 @@ body {
     animation: none !important;
   }
 }
+
+/* ============================================================================
+   INVESTORS PORTAL (business plan) — design tokens ported from the migrated
+   tidepay-bp app (Tailwind v3 → v4). The neutral `ink` scale is mapped onto the
+   dark blue-tinted "Settlement" canvas family and the `tide` accent scale onto
+   the brand azure (--field-a), so the copied /investors components render on the
+   site's palette. Shared component classes (.input, .btn-primary, .prose-plan…)
+   are re-created here, with neobrutalist chrome on the interactive controls.
+   ============================================================================ */
+@theme {
+  /* neutral ink scale → blue-tinted dark canvas family */
+  --color-ink-950: #060a10;
+  --color-ink-900: #0a0f16; /* = --neo-canvas */
+  --color-ink-800: #121a26; /* = --neo-card */
+  --color-ink-700: #15202f;
+  --color-ink-600: #1c2738; /* = --neo-line */
+  --color-ink-500: #26334a;
+  --color-ink-400: #3a4a63;
+  --color-ink-300: #5b6b85;
+  --color-ink-200: #8b98ad;
+  --color-ink-100: #c8d2e0;
+  --color-ink-50: #e6eef7; /* = --neo-ink */
+
+  /* accent tide scale → brand azure (--field-a) */
+  --color-tide-50: #eaf1ff;
+  --color-tide-100: #cdddff;
+  --color-tide-200: #9bb8ff;
+  --color-tide-300: #245cff; /* = --field-a */
+  --color-tide-400: #2450db;
+  --color-tide-500: #1f45b8;
+  --color-tide-600: #1a3a9c;
+  --color-tide-700: #153080;
+  --color-tide-800: #112663;
+  --color-tide-900: #0d1c47;
+
+  /* ported `font-serif` resolves to the self-hosted Archivo display face */
+  --font-serif: var(--font-display), Georgia, serif;
+
+  /* display type scale (from the source tailwind config) */
+  --text-display-xl: 4.5rem;
+  --text-display-xl--line-height: 1.05;
+  --text-display-xl--letter-spacing: -0.03em;
+  --text-display-xl--font-weight: 600;
+  --text-display-lg: 3.5rem;
+  --text-display-lg--line-height: 1.05;
+  --text-display-lg--letter-spacing: -0.03em;
+  --text-display-lg--font-weight: 600;
+  --text-display-md: 2.5rem;
+  --text-display-md--line-height: 1.1;
+  --text-display-md--letter-spacing: -0.025em;
+  --text-display-md--font-weight: 600;
+  --text-display-sm: 1.875rem;
+  --text-display-sm--line-height: 1.15;
+  --text-display-sm--letter-spacing: -0.02em;
+  --text-display-sm--font-weight: 600;
+
+  /* surface shadows used by .surface */
+  --shadow-card: 0 1px 0 0 rgb(255 255 255 / 0.04), 0 24px 48px -12px rgb(0 0 0 / 0.6);
+  --shadow-inner-glow: inset 0 1px 0 0 rgb(255 255 255 / 0.04);
+
+  /* animations used by the plan components */
+  --animate-fade-in: fade-in 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-rise-in: rise-in 500ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-blink: blink 1s step-end infinite;
+  --animate-hint-pulse: hint-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes rise-in {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+@keyframes hint-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@layer components {
+  .surface {
+    background-color: var(--color-ink-800);
+    border: 1px solid var(--color-ink-600);
+    box-shadow: var(--shadow-card), var(--shadow-inner-glow);
+  }
+  .hairline {
+    border-color: var(--color-ink-600);
+  }
+  .input {
+    @apply w-full rounded-neo border-2 border-neo-frame bg-ink-900 px-4 py-3 text-ink-50 shadow-neo transition-colors placeholder:text-ink-300 focus:border-tide-300 focus:outline-none focus:ring-1 focus:ring-tide-300;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-neo border-2 border-neo-frame bg-tide-300 px-5 py-3 font-bold text-white shadow-neo transition-all hover:-translate-x-px hover:-translate-y-px hover:shadow-neo-lg active:translate-x-[3px] active:translate-y-[3px] active:shadow-none disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 text-ink-200 transition-colors hover:text-ink-50;
+  }
+  .code-line {
+    @apply font-mono text-[13px] leading-relaxed text-ink-200;
+  }
+  .prose-plan {
+    @apply text-[16px] leading-[1.75] text-ink-100;
+    font-family: var(--font-text), var(--sans);
+  }
+  .prose-plan h2 {
+    @apply mt-12 mb-4 text-display-sm leading-tight text-ink-50;
+    font-family: var(--font-display), var(--sans);
+    font-weight: 800;
+  }
+  .prose-plan h3 {
+    @apply mt-8 mb-3 text-xl font-semibold text-ink-50;
+  }
+  .prose-plan p { @apply mb-5; }
+  .prose-plan ul { @apply mb-5 list-disc pl-5 marker:text-ink-300; }
+  .prose-plan ol { @apply mb-5 list-decimal pl-5 marker:text-ink-300; }
+  .prose-plan li { @apply mb-2; }
+  .prose-plan a { @apply text-tide-300 underline-offset-4 hover:underline; }
+  .prose-plan strong { @apply font-semibold text-ink-50; }
+  .prose-plan blockquote {
+    @apply my-6 border-l-2 border-tide-400 pl-5 text-ink-100 italic;
+  }
+  .prose-plan code {
+    @apply rounded bg-ink-800 px-1.5 py-0.5 font-mono text-[14px] text-tide-200;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .grid-bg {
+    background-image:
+      radial-gradient(circle at 20% 0%, rgba(36, 92, 255, 0.08), transparent 40%),
+      radial-gradient(circle at 80% 100%, rgba(36, 92, 255, 0.05), transparent 40%);
+  }
+}
