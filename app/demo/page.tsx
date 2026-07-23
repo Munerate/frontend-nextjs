@@ -84,7 +84,7 @@ export default async function DemoSitePage() {
           </section>
 
           <aside className="min-w-0 rounded-xl border border-border bg-accent-bg/20 p-6 lg:self-start">
-            <MiddlewarePanel siteId={site.id} tag={site.site_tag} origin={origin} />
+            <MiddlewarePanel siteId={site.id} tag={site.site_tag} domain={site.domain} />
           </aside>
         </div>
 

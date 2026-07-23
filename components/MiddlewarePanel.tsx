@@ -86,15 +86,154 @@ function Choice({
   );
 }
 
-export default function MiddlewarePanel({
+// Cloudflare Workers has a specific 4-step deploy flow that differs from the
+// standard edge middleware path, so we break it out into its own component
+// with plain-English instructions aimed at non-dev site owners.
+function CloudflareSteps({
   siteId,
   tag,
+  domain,
+  snippet,
 }: {
   siteId: string;
   tag: string;
-  origin?: string;
+  domain: string;
+  snippet: ReturnType<typeof middlewareSnippets>[number];
 }) {
-  const snippets = middlewareSnippets(siteId, tag);
+  const [hasFile, setHasFile] = useState(false);
+  const [innerOpen, setInnerOpen] = useState(1);
+  const innerToggle = (n: number) => setInnerOpen((cur) => (cur === n ? 0 : n));
+
+  function download() {
+    track("middleware_download", { site_id: siteId, framework: "cloudflare" });
+    const blob = new Blob([snippet.code], { type: "text/javascript" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = snippet.filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const steps = [
+    {
+      title: "Create a Cloudflare Worker",
+      summary: "Start a new Worker project in the Cloudflare dashboard",
+      body: (
+        <>
+          <p className="font-text mb-2 text-sm text-neo-ink/70">
+            Go to the{" "}
+            <a
+              href="https://dash.cloudflare.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-neo-ink"
+            >
+              Cloudflare dashboard
+            </a>{" "}
+            → <strong>Workers &amp; Pages</strong> → <strong>Create</strong> →{" "}
+            <strong>Hello World</strong> Worker. Give it any name you like.
+          </p>
+          <p className="font-text text-sm text-neo-ink/70">
+            Once created, open the Worker and install the package. In the <strong>Files</strong>{" "}
+            tab click <strong>Open in terminal</strong> (or use Wrangler locally) and run:
+          </p>
+          <CodeBlock code={snippet.install} lang="bash" />
+        </>
+      ),
+    },
+    {
+      title: "Paste the Worker code",
+      summary: "Replace the default code with the snippet below",
+      body: (
+        <>
+          <p className="font-text mb-2 text-sm text-neo-ink/70">
+            In the <strong>Files</strong> tab, open <code className="font-mono">src/index.js</code>{" "}
+            (or your entry file) and replace everything with the code below. Your site tag and
+            domain are already filled in — it&apos;s ready to deploy as-is.
+          </p>
+          <div className="mb-2 flex items-center justify-end gap-2">
+            <button
+              onClick={download}
+              title={`Download ${snippet.filename}`}
+              className="flex shrink-0 items-center gap-1.5 rounded-neo border-2 border-neo-frame bg-neo-main px-3 py-1.5 text-sm font-medium text-neo-on-primary shadow-neo-sm transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16" />
+              </svg>
+              Download
+            </button>
+          </div>
+          <CodeBlock code={snippet.code} lang="js" />
+        </>
+      ),
+    },
+    {
+      title: "Set the Worker route",
+      summary: "Tell Cloudflare which URLs the Worker handles",
+      body: (
+        <>
+          <p className="font-text mb-2 text-sm text-neo-ink/70">
+            In your Worker, go to <strong>Settings → Triggers → Routes</strong> and add a route:
+          </p>
+          <CodeBlock code={`${domain}/*`} lang="bash" />
+          <p className="font-text mt-2 text-sm text-neo-ink/70">
+            The <code className="font-mono">/*</code> wildcard means the Worker runs on every
+            page of your site.
+          </p>
+        </>
+      ),
+    },
+    {
+      title: "Enable Cloudflare proxy on your domain",
+      summary: "Turn on the orange cloud so requests reach the Worker",
+      body: (
+        <>
+          <p className="font-text mb-2 text-sm text-neo-ink/70">
+            In the Cloudflare dashboard, go to <strong>DNS</strong> and find the record for your
+            domain. Make sure the <strong>Proxy status</strong> is set to{" "}
+            <strong>Proxied</strong> (the cloud icon should be orange 🟠, not grey).
+          </p>
+          <p className="font-text text-sm text-neo-ink/70">
+            This is what routes traffic through the Worker before it reaches Wix. If the cloud
+            is grey, click it to turn it orange.
+          </p>
+          <p className="font-text mt-2 text-sm font-semibold text-neo-ink">
+            Once deployed, bot events will start appearing here within a few minutes.
+          </p>
+        </>
+      ),
+    },
+  ];
+
+  return (
+    <div className="flex flex-col border-t border-neo-frame/15">
+      {steps.map((s, i) => (
+        <Step
+          key={i}
+          n={i + 1}
+          title={s.title}
+          summary={s.summary}
+          open={innerOpen === i + 1}
+          onToggle={() => innerToggle(i + 1)}
+        >
+          {s.body}
+        </Step>
+      ))}
+    </div>
+  );
+}
+
+export default function MiddlewarePanel({
+  siteId,
+  tag,
+  domain,
+}: {
+  siteId: string;
+  tag: string;
+  domain: string;
+}) {
+  const snippets = middlewareSnippets(siteId, tag, domain);
   const [pm, setPm] = useState<PackageManager>("npm");
   const [active, setActive] = useState(snippets[0].id);
   // Which step is expanded (1-3). Start on step 1.
@@ -126,8 +265,32 @@ export default function MiddlewarePanel({
         developer.
       </p>
 
-      <div className="flex flex-col border-t border-neo-frame/15">
-        {/* Step 1 — install the package */}
+      <div className="mb-4 flex flex-wrap gap-1.5">
+        {snippets.map((s) => (
+          <Choice
+            key={s.id}
+            selected={s.id === active}
+            onClick={() => {
+              track(
+                "middleware_framework_tab",
+                { site_id: siteId, framework: s.id },
+                { sample: 0.5 },
+              );
+              setActive(s.id);
+              setOpenStep(1);
+            }}
+          >
+            {s.label}
+          </Choice>
+        ))}
+      </div>
+
+      {/* Cloudflare Workers has its own tailored flow */}
+      {snippet.id === "cloudflare" ? (
+        <CloudflareSteps siteId={siteId} tag={tag} domain={domain} snippet={snippet} />
+      ) : (
+        <div className="flex flex-col border-t border-neo-frame/15">
+
         <Step
           n={1}
           title="Install the package"
@@ -161,6 +324,7 @@ export default function MiddlewarePanel({
         </Step>
 
         {/* Step 2 — choose app type + add the code */}
+
         <Step
           n={2}
           title="Add the code"
@@ -168,27 +332,6 @@ export default function MiddlewarePanel({
           open={openStep === 2}
           onToggle={() => toggle(2)}
         >
-          <p className="font-text mb-2 text-sm text-neo-ink/70">
-            Where is your site hosted? This decides which file the code goes in.
-          </p>
-          <div className="mb-4 flex flex-wrap gap-1.5">
-            {snippets.map((s) => (
-              <Choice
-                key={s.id}
-                selected={s.id === active}
-                onClick={() => {
-                  track(
-                    "middleware_framework_tab",
-                    { site_id: siteId, framework: s.id },
-                    { sample: 0.5 },
-                  );
-                  setActive(s.id);
-                }}
-              >
-                {s.label}
-              </Choice>
-            ))}
-          </div>
 
           {/* Radio toggle: fresh file vs merge into existing */}
           <div className="mb-3 flex flex-col gap-1.5">
@@ -269,6 +412,7 @@ export default function MiddlewarePanel({
           )}
         </Step>
       </div>
+      )}
 
       <p className="font-text mt-4 text-sm text-neo-ink/70">
         That&apos;s it — deploy your site and traffic will start showing up here within a few

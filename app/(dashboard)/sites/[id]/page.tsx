@@ -96,7 +96,7 @@ export default async function SitePage({ params }: PageProps<"/sites/[id]">) {
       {/* Install steps only show until the first events arrive. */}
       {rows.length === 0 && (
         <aside className="rounded-neo border-2 border-neo-frame bg-neo-card p-6 shadow-neo">
-          <MiddlewarePanel siteId={site.id} tag={site.site_tag} origin={origin} />
+          <MiddlewarePanel siteId={site.id} tag={site.site_tag} domain={site.domain} />
         </aside>
       )}
 

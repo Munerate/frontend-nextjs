@@ -51,6 +51,9 @@ export type FrameworkSnippet = {
 const IMPORT_LINE =
   "import { detectBot, buildPayload, sendDetectEvent } from '@munerate/bot-id';";
 
+const IMPORT_LINE_CF =
+  "import { detectBot, isVulnScan, buildPayload, sendDetectEvent } from '@munerate/bot-id';";
+
 function configBlock(siteId: string, tag: string): string {
   return `const botIdConfig = {
   siteId: '${siteId}',
@@ -129,45 +132,83 @@ function edgeMerge(
   ];
 }
 
-function cloudflareSnippet(siteId: string, tag: string): string {
-  return `${IMPORT_LINE}
+function cfConfigBlock(siteId: string, tag: string): string {
+  return `const CONFIG = {
+  siteId: '${siteId}',
+  apiEndpoint: '${INGEST_ORIGIN}',
+  siteTag: '${tag}',
+  // Never short-circuit with a 403 — Wix still serves the page. We only observe.
+  observeOnly: true,
+};`;
+}
 
-${configBlock(siteId, tag)}
+function cfSiteOriginLine(domain: string): string {
+  return (
+    "// The domain Cloudflare should proxy requests to.\n" +
+    `const SITE_ORIGIN = 'https://${domain}';`
+  );
+}
+
+function cloudflareSnippet(siteId: string, tag: string, domain: string): string {
+  return `${IMPORT_LINE_CF}
+
+${cfConfigBlock(siteId, tag)}
+
+${cfSiteOriginLine(domain)}
 
 export default {
-  async fetch(request: Request, _env: unknown, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request, ctx) {
     const url = new URL(request.url);
     const bot = detectBot(request.headers.get('user-agent') || '');
+    const vuln = isVulnScan(url.pathname);
 
-    if (bot) {
-      const payload = buildPayload(request, botIdConfig, url.pathname, false, bot);
-      // keep the request alive past the response for the fire-and-forget send
-      ctx.waitUntil(sendDetectEvent(botIdConfig, payload, botIdConfig.siteTag).catch(() => {}));
+    if (bot || vuln) {
+      const payload = buildPayload(request, CONFIG, url.pathname, /* isBlocked */ false, bot);
+      // Fire-and-forget — telemetry never adds latency to the page response.
+      ctx.waitUntil(sendDetectEvent(CONFIG, payload, CONFIG.siteTag));
     }
 
-    return fetch(request); // pass through to your origin / next handler
+    // Transparently proxy every request through to your origin.
+    const originUrl = SITE_ORIGIN.replace(/\/+$/, '') + url.pathname + url.search;
+    return fetch(new Request(originUrl, request));
   },
 };`;
 }
 
-function cloudflareMerge(siteId: string, tag: string): { label: string; code: string }[] {
+function cloudflareMerge(siteId: string, tag: string, domain: string): { label: string; code: string }[] {
   return [
-    { label: "Add this import at the top of your Worker file", code: IMPORT_LINE },
-    { label: "Add this config near the top", code: configBlock(siteId, tag) },
     {
-      label: "Paste these lines inside your existing fetch() handler, before you return the response",
+      label: "Add this import at the top of your Worker file (src/index.js or similar)",
+      code: IMPORT_LINE_CF,
+    },
+    {
+      label: "Add this config block near the top — your site tag is already filled in",
+      code: cfConfigBlock(siteId, tag),
+    },
+    {
+      label: "Add this line near the top too — it points the Worker at your site",
+      code: cfSiteOriginLine(domain),
+    },
+    {
+      label:
+        "Replace the body of your existing fetch() handler (or create one) with this — it detects bots and proxies everything to your site",
       code: `    const url = new URL(request.url);
     const bot = detectBot(request.headers.get('user-agent') || '');
+    const vuln = isVulnScan(url.pathname);
 
-    if (bot) {
-      const payload = buildPayload(request, botIdConfig, url.pathname, false, bot);
-      ctx.waitUntil(sendDetectEvent(botIdConfig, payload, botIdConfig.siteTag).catch(() => {}));
-    }`,
+    if (bot || vuln) {
+      const payload = buildPayload(request, CONFIG, url.pathname, false, bot);
+      ctx.waitUntil(sendDetectEvent(CONFIG, payload, CONFIG.siteTag));
+    }
+
+    // Proxy through to your site.
+    const originUrl = SITE_ORIGIN.replace(/\/+$/, '') + url.pathname + url.search;
+    return fetch(new Request(originUrl, request));`,
     },
   ];
 }
 
-export function middlewareSnippets(siteId: string, tag: string): FrameworkSnippet[] {
+export function middlewareSnippets(siteId: string, tag: string, domain = ""): FrameworkSnippet[] {
   return [
     {
       id: "edge",
@@ -192,9 +233,9 @@ export function middlewareSnippets(siteId: string, tag: string): FrameworkSnippe
       label: "Cloudflare Workers",
       description: "Server-side bot detection at the Cloudflare edge",
       install: "npm install @munerate/bot-id",
-      filename: "worker.ts",
-      code: cloudflareSnippet(siteId, tag),
-      mergeParts: cloudflareMerge(siteId, tag),
+      filename: "worker.js",
+      code: cloudflareSnippet(siteId, tag, domain),
+      mergeParts: cloudflareMerge(siteId, tag, domain),
     },
   ];
 }

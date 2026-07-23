@@ -170,7 +170,7 @@ export default function LoginForm() {
             }
           }}
           disabled={step === "email"}
-          className="font-text mt-4 text-sm font-semibold text-field-b transition-colors hover:text-field-b/80 disabled:opacity-0"
+          className="font-text mx-auto mt-4 block text-sm font-semibold text-gray-500 transition-colors hover:text-gray-700 disabled:opacity-0"
         >
           Use a different email
         </button>
