@@ -8,7 +8,7 @@ import Brand from "@/components/Brand";
 
 // Categorise the post-login destination without leaking the raw next URL.
 function nextKind(next: string): "sites" | "sites_new" | "other" {
-  if (next.startsWith("/sites/new")) return "sites_new";
+  if (next.startsWith("/sites/new") || next.includes("mode=new")) return "sites_new";
   if (next.startsWith("/sites")) return "sites";
   return "other";
 }
