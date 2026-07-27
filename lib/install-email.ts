@@ -8,9 +8,14 @@ export function buildInstallEmail(opts: {
   siteId: string;
   siteTag: string;
   origin: string;
+  // A one-click magic login link (from claimSite). When present, the dashboard
+  // CTA uses it so the user is signed in on arrival — this is the only email the
+  // Claim flow sends, so it doubles as the account-activation link.
+  loginUrl?: string;
 }): { subject: string; html: string; text: string } {
-  const { domain, siteId, siteTag, origin } = opts;
+  const { domain, siteId, siteTag, origin, loginUrl } = opts;
   const dashboardUrl = `${origin.replace(/\/$/, "")}/sites/${siteId}`;
+  const ctaUrl = loginUrl || dashboardUrl;
   // The Next.js edge middleware is the default install path.
   const snippet = middlewareSnippets(siteId, siteTag)[0];
 
@@ -30,7 +35,7 @@ ${snippet.code}
 
 3. Deploy. Once traffic arrives, view analytics and installation status here:
 
-   ${dashboardUrl}
+   ${ctaUrl}
 
 Your site tag is embedded in the snippet above — keep it private; it authenticates your traffic.
 
@@ -65,7 +70,7 @@ Your site tag is embedded in the snippet above — keep it private; it authentic
       Once traffic arrives, view analytics and installation status on your dashboard:
     </p>
     <p style="margin:0 0 24px;">
-      <a href="${dashboardUrl}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:700;">View your dashboard</a>
+      <a href="${ctaUrl}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:700;">View your dashboard</a>
     </p>
 
     <p style="font-size:13px;line-height:1.6;color:#888;border-top:1px solid #e0e0e0;padding-top:16px;margin-top:24px;">

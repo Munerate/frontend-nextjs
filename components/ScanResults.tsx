@@ -98,7 +98,7 @@ export default function ScanResults({ domain }: { domain: string }) {
     );
   }
 
-  const next = `/sites/new?domain=${encodeURIComponent(domain)}`;
+  const next = `/sites?mode=new`;
   const signInHref = `/login?next=${encodeURIComponent(next)}`;
   const scored = result.checks.filter((c) => !c.informational);
   const total = scored.length;

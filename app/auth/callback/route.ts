@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import type { EmailOtpType } from "@supabase/supabase-js";
 import { getSupabaseServer } from "@/lib/supabase/server";
 import { linkAnonToUser, logServerEvent } from "@/lib/track-server";
 
 export const runtime = "nodejs";
 
-// A short, PII-free category for the post-login destination.
 function nextKind(next: string): string {
-  if (next.startsWith("/sites/new")) return "sites_new";
+  if (next.includes("site=new") || next.includes("mode=new") || next.startsWith("/sites/new")) return "sites_new";
   if (next.startsWith("/sites")) return "sites";
   if (next.startsWith("/settings")) return "settings";
   return "other";
@@ -18,11 +18,18 @@ function nextKind(next: string): string {
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
+  // Server-generated magic links (see claimSite) arrive with a token hash rather
+  // than a PKCE ?code= — there is no browser-side code verifier to exchange, so
+  // we verify the token directly instead.
+  const tokenHash = searchParams.get("token_hash");
+  const otpType = searchParams.get("type") as EmailOtpType | null;
   const next = searchParams.get("next") || "/sites";
 
-  if (code) {
+  if (code || (tokenHash && otpType)) {
     const supabase = await getSupabaseServer();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { error } = code
+      ? await supabase.auth.exchangeCodeForSession(code)
+      : await supabase.auth.verifyOtp({ token_hash: tokenHash!, type: otpType! });
     if (!error) {
       // Server-authoritative identity stitch + sign-up event. Non-fatal: a
       // telemetry failure must never block the redirect.

@@ -50,7 +50,7 @@ export default function TestMiddlewarePanel({
       <p className="font-text mb-4 text-sm text-neo-ink/70">
         Already installed and deployed? We&apos;ll visit{" "}
         <code className="font-mono text-neo-ink">{domain}</code> as a{" "}
-        <code className="font-mono text-neo-ink">HeadlessChrome</code> bot. If the middleware
+        <code className="font-mono text-neo-ink">HeadlessChrome</code>{" "} bot. If the middleware
         is live, it&apos;ll detect the bot and the hit will appear in your analytics above.
       </p>
 

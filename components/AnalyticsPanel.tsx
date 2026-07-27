@@ -29,16 +29,20 @@ const MIN_ROWS = 5;
 
 export default function AnalyticsPanel({
   events,
+  domain,
   timeframe: controlledTimeframe,
   onTimeframeChange,
   hideTimeframeSelector = false,
+  exactCounts,
 }: {
   events: SlimEvent[];
+  domain?: string;
   /** Controlled timeframe (e.g. shared with the landing hero). Falls back to
    *  internal state when omitted, so existing call sites are unaffected. */
   timeframe?: TimeframeKey;
   onTimeframeChange?: (v: TimeframeKey) => void;
   hideTimeframeSelector?: boolean;
+  exactCounts?: Record<TimeframeKey, number>;
 }) {
   const [internalTimeframe, setInternalTimeframe] = useState<TimeframeKey>("all");
   const timeframe = controlledTimeframe ?? internalTimeframe;
@@ -102,18 +106,19 @@ export default function AnalyticsPanel({
   }, [filtered, hourly, rankedBots]);
 
   // KPIs.
-  const total = filtered.length;
+  const sampleTotal = filtered.length;
+  const displayTotal = exactCounts ? exactCounts[timeframe] : sampleTotal;
   const blockedScans = filtered.filter((e) => e.blocked && e.category === "vuln_scan").length;
   const uniqueBots = new Set(filtered.map((e) => e.bot_name || "Unknown")).size;
   const aiHits = filtered.filter((e) => e.category === "ai").length;
 
   const byCategory = topCounts(filtered, "category", 6);
   const topProviders = topCounts(filtered, "provider", 6);
-  const topPaths = topCounts(filtered, "path", 8);
+  const topPaths = topCounts(filtered, "path", 8).map(([p, c]) => [p === "/" ? (domain || "Homepage") : p, c] as [string, number]);
   const topReferrers = topReferrerCounts(filtered, 8);
   const recent = filtered.slice(0, 12);
 
-  const totalForBars = total || 1;
+  const totalForBars = sampleTotal || 1;
 
   return (
     <div className="rounded-2xl border border-white/10 bg-[#0b0f19] p-5 text-zinc-100 shadow-[0_1px_0_0_rgba(255,255,255,0.04)_inset,0_8px_30px_-12px_rgba(0,0,0,0.6)] sm:p-6">
@@ -129,10 +134,10 @@ export default function AnalyticsPanel({
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label="Total events" value={total} />
-        <Kpi label="AI bot hits" value={aiHits} accent="#34d399" share={pct(aiHits, total)} />
+        <Kpi label="Total events" value={displayTotal} />
+        <Kpi label="AI bot hits" value={aiHits} accent="#34d399" share={pct(aiHits, sampleTotal)} />
         <Kpi label="Unique bots" value={uniqueBots} />
-        <Kpi label="Blocked scans" value={blockedScans} accent="#f87171" share={pct(blockedScans, total)} />
+        <Kpi label="Blocked scans" value={blockedScans} accent="#f87171" share={pct(blockedScans, sampleTotal)} />
       </div>
 
       {/* Main area chart */}
@@ -161,7 +166,7 @@ export default function AnalyticsPanel({
       </div>
 
       {/* Recent events table */}
-      <RecentTable rows={recent} colorFor={colorFor} hourly={hourly} />
+      <RecentTable rows={recent} colorFor={colorFor} hourly={hourly} domain={domain} />
     </div>
   );
 }
@@ -414,10 +419,12 @@ function RecentTable({
   rows,
   colorFor,
   hourly,
+  domain,
 }: {
   rows: SlimEvent[];
   colorFor: (name: string) => string;
   hourly: boolean;
+  domain?: string;
 }) {
   if (rows.length === 0) return null;
   return (
@@ -475,7 +482,7 @@ function RecentTable({
                     </span>
                   </td>
                   <td className="max-w-[14rem] truncate px-4 py-2.5 font-mono text-xs text-zinc-400" title={r.path ?? ""}>
-                    {r.path || "—"}
+                    {r.path === "/" ? (domain || "Homepage") : (r.path || "—")}
                   </td>
                   <td className="max-w-[10rem] truncate px-4 py-2.5 text-zinc-400" title={r.referrer ?? ""}>
                     {ref}

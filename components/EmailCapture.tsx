@@ -10,7 +10,7 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { getSupabaseClient } from "@/lib/supabase/client";
+import { claimSite } from "@/app/(dashboard)/sites/actions";
 import { track } from "@/lib/track";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -31,31 +31,21 @@ export default function EmailCapture({ url }: { url: string }) {
     }
     setStatus("submitting");
     try {
-      const supabase = getSupabaseClient();
       const normalizedEmail = trimmed.toLowerCase();
       const email_domain = normalizedEmail.split("@")[1] ?? null;
       track("claim_submit_attempt", { domain: url, email_domain });
 
-      // Record the claim (waitlist analytics). Non-fatal if it fails.
-      await supabase.from("claims").insert({ email: normalizedEmail, url });
-
-      // Passwordless signup: send a magic-link verification email. Clicking it
-      // lands on /sites/new?domain=<url>, which auto-creates the site + tag and
-      // emails the install instructions.
-      const next = `/sites/new?domain=${encodeURIComponent(url)}`;
-      const emailRedirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
-      const { error } = await supabase.auth.signInWithOtp({
-        email: normalizedEmail,
-        // flow: "claim" is surfaced in the email template as {{ .Data.flow }} so
-        // the confirm-signup email renders link-only (no OTP code) — the Claim
-        // flow completes by clicking the link, there's nowhere to paste a code.
-        // domain is surfaced as {{ .Data.domain }} so the email names the exact
-        // site being claimed.
-        options: { shouldCreateUser: true, emailRedirectTo, data: { flow: "claim", domain: url } },
-      });
-      if (error) {
-        track("claim_submit_error", { domain: url, error_code: "otp_send_failed" });
-        setErrorMsg(error.message || "Something went wrong. Please try again.");
+      // Provision the site + account server-side and send a SINGLE install email
+      // that carries a one-click magic login link. No separate OTP/sign-in email
+      // is sent — the install email is the only message the user receives.
+      const result = await claimSite(normalizedEmail, url);
+      if ("error" in result) {
+        track("claim_submit_error", { domain: url, error_code: result.error });
+        setErrorMsg(
+          result.error === "invalid_email"
+            ? "Please enter a valid email address."
+            : "Something went wrong. Please try again."
+        );
         setStatus("error");
         return;
       }
@@ -83,10 +73,11 @@ export default function EmailCapture({ url }: { url: string }) {
           Check your inbox.
         </p>
         <p className="font-text mt-1 text-sm font-medium text-white/75">
-          We sent a confirmation link to{" "}
-          <span className="font-bold text-white">{email.trim()}</span>. Click it to
-          claim <span className="font-bold text-white">{url}</span> — we&apos;ll set
-          up your site and email your install so AI agents start paying you.
+          We&apos;ve claimed <span className="font-bold text-white">{url}</span> and
+          emailed your install steps to{" "}
+          <span className="font-bold text-white">{email.trim()}</span>. Open it to
+          drop in the middleware and sign in to your dashboard — then AI agents
+          start paying you.
         </p>
       </div>
     );
