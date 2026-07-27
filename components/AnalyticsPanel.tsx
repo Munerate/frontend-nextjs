@@ -440,7 +440,7 @@ function RecentTable({
               <th className="px-4 py-2 font-medium">Time</th>
               <th className="px-4 py-2 font-medium">Bot</th>
               <th className="px-4 py-2 font-medium">Category</th>
-              <th className="px-4 py-2 font-medium">Path</th>
+              <th className="px-4 py-2 font-medium">Page</th>
               <th className="px-4 py-2 font-medium">Referrer</th>
               <th className="px-4 py-2 text-right font-medium">Status</th>
             </tr>

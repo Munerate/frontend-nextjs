@@ -413,7 +413,7 @@ function RecentTable({ rows }: { rows: ResolvedEvent[] }) {
               <th className="px-5 py-2 font-bold">Time</th>
               <th className="px-5 py-2 font-bold">Event</th>
               <th className="px-5 py-2 font-bold">Source</th>
-              <th className="px-5 py-2 font-bold">Path</th>
+              <th className="px-5 py-2 font-bold">Page</th>
               <th className="px-5 py-2 font-bold">Device</th>
             </tr>
           </thead>

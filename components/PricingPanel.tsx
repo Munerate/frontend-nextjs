@@ -188,7 +188,7 @@ export default function PricingPanel({ events, domain }: { events: EventRow[], d
         {/* Top Earner */}
         <div className="flex flex-col gap-4 rounded-neo border-2 border-blue-500/30 bg-slate-900 p-6 shadow-neo">
           <div className="flex flex-col gap-1 overflow-hidden">
-            <span className="font-text text-xs font-bold uppercase tracking-wider text-slate-400">Top Earner Path</span>
+            <span className="font-text text-xs font-bold uppercase tracking-wider text-slate-400">Top Earner Page</span>
             <span className="font-display text-2xl font-extrabold text-slate-50 truncate" title={topEarnerPath === "/" ? (domain || "Homepage") : topEarnerPath}>
               {topEarnerPath === "/" ? (domain || "Homepage") : topEarnerPath}
             </span>
@@ -216,7 +216,7 @@ export default function PricingPanel({ events, domain }: { events: EventRow[], d
           <table className="w-full text-left font-text text-sm">
             <thead className="border-b-2 border-slate-700 bg-slate-800 sticky top-0 z-10">
               <tr>
-                <th className="p-4 font-bold uppercase text-slate-400">Path</th>
+                <th className="p-4 font-bold uppercase text-slate-400">Page</th>
                 <th className="p-4 font-bold uppercase text-slate-400 text-right">Cost / Req</th>
                 <th className="p-4 font-bold uppercase text-slate-400 text-right">Visits</th>
                 <th className="p-4 font-bold uppercase text-slate-400 text-right">Earnings</th>
