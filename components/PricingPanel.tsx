@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { AreaChart, Area, ResponsiveContainer } from "recharts";
 import { TrendingUp, TrendingDown, Minus, ChevronLeft, ChevronRight } from "lucide-react";
+import InfoTooltip from "./InfoTooltip";
 
 type EventRow = {
   ts: string;
@@ -148,7 +149,9 @@ export default function PricingPanel({ events, domain }: { events: EventRow[], d
               Dynamic Pricing
             </h2>
             <p className="font-text text-sm text-slate-400">
-              Assigning a dynamic $ value to your app&apos;s content paths based on demand and bot activity.
+              When AI bots and crawlers read your pages, we charge them for access. The price
+              per page adjusts automatically &mdash; pages that are in higher demand earn more.
+              Everything shown below is an estimate of those earnings, not a guaranteed payout.
             </p>
           </div>
         </div>
@@ -158,7 +161,10 @@ export default function PricingPanel({ events, domain }: { events: EventRow[], d
         {/* Earnings This Month */}
         <div className="flex flex-col gap-4 rounded-neo border-2 border-green-500/30 bg-slate-900 p-6 shadow-neo relative overflow-hidden">
           <div className="relative z-10 flex flex-col gap-1">
-            <span className="font-text text-xs font-bold uppercase tracking-wider text-slate-400">Earnings This Month</span>
+            <span className="flex items-center gap-1.5 font-text text-xs font-bold uppercase tracking-wider text-slate-400">
+              Earnings This Month
+              <InfoTooltip label="About earnings this month" text="An estimate of what your site's content earned this month from AI bots and crawlers accessing it. The green line shows the daily trend." />
+            </span>
             <div className="flex items-end gap-2">
               <span className="font-display text-4xl font-extrabold text-slate-50">${currentMonthEarnings.toFixed(2)}</span>
               <div className={`flex items-center text-sm font-bold ${percentChange > 0 ? 'text-green-400' : percentChange < 0 ? 'text-red-400' : 'text-slate-400'} mb-1`}>
@@ -179,7 +185,10 @@ export default function PricingPanel({ events, domain }: { events: EventRow[], d
         {/* Estimation for Year */}
         <div className="flex flex-col gap-4 rounded-neo border-2 border-yellow-500/30 bg-slate-900 p-6 shadow-neo">
           <div className="flex flex-col gap-1">
-            <span className="font-text text-xs font-bold uppercase tracking-wider text-slate-400">Estimations (Yearly)</span>
+            <span className="flex items-center gap-1.5 font-text text-xs font-bold uppercase tracking-wider text-slate-400">
+              Estimations (Yearly)
+              <InfoTooltip label="About yearly estimation" text="A rough projection of yearly earnings if this month's pace continues. This is an estimate, not a guarantee." />
+            </span>
             <span className="font-display text-4xl font-extrabold text-slate-50">${yearlyEstimation.toFixed(2)}</span>
             <span className="font-text text-xs text-slate-500 mt-2">Based on current month run-rate</span>
           </div>
@@ -188,7 +197,10 @@ export default function PricingPanel({ events, domain }: { events: EventRow[], d
         {/* Top Earner */}
         <div className="flex flex-col gap-4 rounded-neo border-2 border-blue-500/30 bg-slate-900 p-6 shadow-neo">
           <div className="flex flex-col gap-1 overflow-hidden">
-            <span className="font-text text-xs font-bold uppercase tracking-wider text-slate-400">Top Earner Page</span>
+            <span className="flex items-center gap-1.5 font-text text-xs font-bold uppercase tracking-wider text-slate-400">
+              Top Earner Page
+              <InfoTooltip label="About top earner page" text="The single page on your site bringing in the most estimated earnings so far." />
+            </span>
             <span className="font-display text-2xl font-extrabold text-slate-50 truncate" title={topEarnerPath === "/" ? (domain || "Homepage") : topEarnerPath}>
               {topEarnerPath === "/" ? (domain || "Homepage") : topEarnerPath}
             </span>
@@ -201,7 +213,10 @@ export default function PricingPanel({ events, domain }: { events: EventRow[], d
         {/* Total Pages */}
         <div className="flex flex-col gap-4 rounded-neo border-2 border-purple-500/30 bg-slate-900 p-6 shadow-neo">
           <div className="flex flex-col gap-1">
-            <span className="font-text text-xs font-bold uppercase tracking-wider text-slate-400">Total Earning Pages</span>
+            <span className="flex items-center gap-1.5 font-text text-xs font-bold uppercase tracking-wider text-slate-400">
+              Total Earning Pages
+              <InfoTooltip label="About total earning pages" text="How many different pages on your site have earned anything from bot activity." />
+            </span>
             <span className="font-display text-4xl font-extrabold text-slate-50">{totalEarningPages}</span>
             <span className="font-text text-xs text-slate-500 mt-2">Unique content paths</span>
           </div>
@@ -210,16 +225,39 @@ export default function PricingPanel({ events, domain }: { events: EventRow[], d
 
       <div className="rounded-neo border-2 border-slate-700 bg-slate-900 shadow-neo overflow-hidden flex flex-col">
         <div className="border-b-2 border-slate-700 bg-slate-800 p-4">
-          <h3 className="font-display text-md font-bold uppercase tracking-wide text-slate-50">Page Performance</h3>
+          <h3 className="flex items-center gap-1.5 font-display text-md font-bold uppercase tracking-wide text-slate-50">
+            Page Performance
+            <InfoTooltip label="About page performance" text="How each page is performing. Values are estimates based on demand and bot activity, not guaranteed payouts." />
+          </h3>
         </div>
         <div className="overflow-x-auto max-h-[600px] overflow-y-auto custom-scrollbar">
           <table className="w-full text-left font-text text-sm">
             <thead className="border-b-2 border-slate-700 bg-slate-800 sticky top-0 z-10">
               <tr>
-                <th className="p-4 font-bold uppercase text-slate-400">Page</th>
-                <th className="p-4 font-bold uppercase text-slate-400 text-right">Cost / Req</th>
-                <th className="p-4 font-bold uppercase text-slate-400 text-right">Visits</th>
-                <th className="p-4 font-bold uppercase text-slate-400 text-right">Earnings</th>
+                <th className="p-4 font-bold uppercase text-slate-400">
+                  <span className="inline-flex items-center gap-1.5">
+                    Page
+                    <InfoTooltip label="About the page column" text="The page on your site that bots accessed." />
+                  </span>
+                </th>
+                <th className="p-4 font-bold uppercase text-slate-400 text-right">
+                  <span className="inline-flex items-center gap-1.5">
+                    Cost / Req
+                    <InfoTooltip label="About cost per request" text="The estimated amount charged each time a bot accesses this page." />
+                  </span>
+                </th>
+                <th className="p-4 font-bold uppercase text-slate-400 text-right">
+                  <span className="inline-flex items-center gap-1.5">
+                    Visits
+                    <InfoTooltip label="About visits" text="How many times bots accessed this page." />
+                  </span>
+                </th>
+                <th className="p-4 font-bold uppercase text-slate-400 text-right">
+                  <span className="inline-flex items-center gap-1.5">
+                    Earnings
+                    <InfoTooltip label="About earnings" text="Estimated total earned from this page (visits multiplied by cost per request)." />
+                  </span>
+                </th>
               </tr>
             </thead>
             <tbody>
