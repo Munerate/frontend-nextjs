@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { getSupabaseServer, getSupabaseAdmin } from "@/lib/supabase/server";
+import { getSupabaseServer } from "@/lib/supabase/server";
 import { Settings, Activity, CreditCard, Wallet, AlertCircle } from "lucide-react";
 // import VerifyPanel from "@/components/VerifyPanel"; // verify step disabled for now
 import MuneratePanel from "@/components/MuneratePanel";
@@ -33,7 +33,7 @@ export default async function SitePage({ params, searchParams }: PageProps<"/sit
   const { id } = await params;
   const sp = await searchParams;
   
-  const supabase = getSupabaseAdmin();
+  const supabase = await getSupabaseServer();
 
   const { data: site } = await supabase
     .from("sites")
