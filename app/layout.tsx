@@ -1,41 +1,30 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Archivo, Comfortaa, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 // global styles (neobrutalist tokens, ink-outline utility, animations)
 import "./globals.css";
 import PageViewTracker from "@/components/PageViewTracker";
 import { siteOrigin } from "@/lib/blog";
 
-// Comfortaa → the wordmark. Archivo (heavy) → oversized neobrutalist display
-// headlines. Inter → landing body/UI copy (gives weight contrast against the
-// heavy display font). All self-hosted via next/font (no runtime request, no
-// FOUC) and exposed as CSS variables used by .font-brand / .font-display /
-// .font-text. NOTE: this is additive — the legacy app pages still use
-// font-sans → --sans and are unaffected (nothing applies .font-text there).
-const comfortaa = Comfortaa({
-  subsets: ["latin"],
-  variable: "--font-brand",
-  display: "swap",
-});
-const archivo = Archivo({
-  subsets: ["latin"],
-  variable: "--font-display",
-  display: "swap",
-});
+// Simplistic, clean typography using Inter
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-text",
   display: "swap",
 });
 
+// Alias for display/brand variables to avoid breaking other components immediately
+// but keeping them simple and clean
+const fontVars = `${inter.variable} font-sans`;
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin()),
   title: {
-    default: "Munerate — See what AI owes your site",
-    template: "%s — Munerate",
+    default: "AI Traffic Lens — Check bots activity on your website",
+    template: "%s — AI Traffic Lens",
   },
   description:
-    "Munerate shows what AI owes your site: it classifies incoming traffic into humans, bots, AI crawlers, and vuln scans, verifies crawlers so spoofed user-agents get flagged, and turns your indexed content into grounded answers.",
+    "AI Traffic Lens classifies incoming traffic into humans, bots, AI crawlers, and vuln scans, verifies crawlers so spoofed user-agents get flagged, and helps you see exactly which agents are reading your site.",
   keywords: [
     "AI crawlers",
     "bot detection",
@@ -43,22 +32,21 @@ export const metadata: Metadata = {
     "ClaudeBot",
     "traffic classification",
     "crawler verification",
-    "AI content licensing",
     "web analytics",
   ],
-  applicationName: "Munerate",
+  applicationName: "AI Traffic Lens",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
-    siteName: "Munerate",
-    title: "Munerate — See what AI owes your site",
+    siteName: "AI Traffic Lens",
+    title: "AI Traffic Lens — Check bots activity on your website",
     description:
       "Classify humans, bots, AI crawlers, and vuln scans hitting your site — with verified crawlers so spoofs get flagged.",
     url: siteOrigin(),
   },
   twitter: {
     card: "summary_large_image",
-    title: "Munerate — See what AI owes your site",
+    title: "AI Traffic Lens — Check bots activity on your website",
     description:
       "Classify humans, bots, AI crawlers, and vuln scans hitting your site — with verified crawlers so spoofs get flagged.",
   },
@@ -72,7 +60,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`h-full antialiased ${comfortaa.variable} ${archivo.variable} ${inter.variable}`}
+      className={`h-full antialiased ${fontVars}`}
     >
       <body className="min-h-full flex flex-col font-sans">
         <PageViewTracker />

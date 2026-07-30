@@ -19,27 +19,20 @@ export function buildInstallEmail(opts: {
   // The Next.js edge middleware is the default install path.
   const snippet = middlewareSnippets(siteId, siteTag)[0];
 
-  const subject = `Install Munerate on ${domain} — start monetizing AI agents`;
+  const subject = `Install AI Traffic Lens on ${domain} — start monitoring AI agents`;
 
-  const text = `You've claimed ${domain} on Munerate.
+  const text = `You've claimed ${domain} on AI Traffic Lens.
 
-Follow these steps to start tracking (and getting paid for) AI-agent traffic:
+Your unique site tag is: ${siteTag}
 
-1. Install the bot-id package:
+Next steps:
+1. Add the tracking snippet to your site.
+2. We'll automatically verify traffic using your site tag.
+3. Check your dashboard at https://aitrafficlens.xyz/sites/${siteId} to see activity.
 
-   ${snippet.install}
+If you have any questions or need help with installation, reply to this email.
 
-2. Add the middleware (${snippet.filename}):
-
-${snippet.code}
-
-3. Deploy. Once traffic arrives, view analytics and installation status here:
-
-   ${ctaUrl}
-
-Your site tag is embedded in the snippet above — keep it private; it authenticates your traffic.
-
-— The Munerate team`;
+— The AI Traffic Lens team`;
 
   const esc = (s: string) =>
     s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");

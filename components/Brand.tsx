@@ -36,7 +36,7 @@ export default function Brand({
     <>
       <BrandMark size={SIZES[size].mark} tile={tile} tileFill={tileFill} barFill={barFill} />
       <span className={`font-brand font-bold tracking-tight ${SIZES[size].text}`}>
-        Munerate
+        AI Traffic Lens
       </span>
     </>
   );

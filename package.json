@@ -1,8 +1,8 @@
 {
-  "name": "munerate-dashboard",
+  "name": "aitrafficlens",
   "version": "0.1.0",
   "private": true,
-  "description": "Dashboard for Munerate — detect bot, AI-crawler, and vuln-scan traffic on your site, and run grounded ask/find over your indexed content.",
+  "description": "AI Traffic Lens — check bots activity on your website.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

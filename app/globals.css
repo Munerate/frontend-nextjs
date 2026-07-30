@@ -32,54 +32,38 @@
    ============================================================================ */
 
 :root {
-  /* — legacy dark app theme (unchanged) — */
-  --text: #a39db0;
-  --text-h: #f5f3f9;
-  --bg: #0c0a12;
-  --border: #26222e;
-  --code-bg: #16131e;
-  --accent: #c084fc;
-  --accent-bg: #241834;
-  --accent-border: #432d63;
+  /* — minimalistic sleek light theme — */
+  --text: #111827;
+  --text-h: #000000;
+  --bg: #ffffff;
+  --border: #e5e7eb;
+  --code-bg: #f3f4f6;
+  --accent: #2563eb;
+  --accent-bg: #eff6ff;
+  --accent-border: #bfdbfe;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  /* — neobrutalist "Settlement" system (landing): dark sky blue + gold — */
-  --field-a: #245cff;
-  /* azure — brand + primary action. Brighter/slightly-desaturated vs the old
-     #0533ff so the bold blue FILLS (cartogram cells, CTA panel, logo tile) read
-     as crisp planes on black instead of halating; white text on it stays AA (5.19). */
-  --field-b: #ff4d87;
-  /* hot rose — live signal dot + logo bars. Desaturated off the old neon #ff2a6d
-     so the pair reads premium not rave; dark text on it is AA (6.0) and it stays
-     legible as the big pink estimate number on black (6.7). */
-  --neo-main: var(--field-a);
-  /* primary accent (sky blue) */
-  --neo-ink: #e6eef7;
-  /* cool light off-white text on the dark canvas */
-  --neo-canvas: #0a0f16;
-  /* near-black, blue-tinted page canvas (the whole landing rides on this) */
-  --neo-line: #1c2738;
-  /* subtle blue-tinted hairline divider on dark */
-  --neo-paper: #0e1420;
-  /* slightly raised blue tint for the one rhythm section (the economy band) */
-  --neo-card: #121a26;
-  /* dark blue-tinted elevated card surface (replaces the old white cards) */
-  --neo-frame: #cbd5e3;
-  /* hard neobrutalist frame colour — light/cool, since black vanishes on the canvas */
-  --neo-on-accent: #06121c;
-  /* dark blue-tinted text/icons that sit ON the hot-pink accent (field-b) */
+  /* sleek system mapping for the neo variables used in the app */
+  --field-a: #000000;
+  --field-b: #2563eb;
+  
+  --neo-main: #000000;
+  --neo-ink: #111827;
+  --neo-canvas: #ffffff;
+  --neo-line: #e5e7eb;
+  --neo-paper: #f9fafb;
+  --neo-card: #ffffff;
+  --neo-frame: #e5e7eb;
+  --neo-on-accent: #ffffff;
   --neo-on-primary: #ffffff;
-  /* white text/icons that sit ON the deep azure primary (field-a / neo-main) */
-  --ink-shadow: 3px 3px 0 #000;
-  /* hard offset shadow for blue text + logo — the one knob; matches cards/buttons */
-  --ink-shadow-sm: 1px 1px 0 #000;
-  /* smaller offset for the tiny SVG map labels (cartogram names) so the shadow
-     stays proportional to the small text instead of overpowering it */
+  
+  /* Reset offset shadows to smooth elegant shadows */
+  --ink-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --ink-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
 @theme inline {
-  /* legacy */
   --color-text: var(--text);
   --color-text-h: var(--text-h);
   --color-bg: var(--bg);
@@ -91,8 +75,6 @@
   --font-sans: var(--sans);
   --font-mono: var(--mono);
 
-  /* neobrutalist colour utilities: bg-field-a, bg-field-b, bg-neo-main,
-     text-neo-ink, bg-neo-paper, bg-neo-card, … */
   --color-field-a: var(--field-a);
   --color-field-b: var(--field-b);
   --color-neo-main: var(--neo-main);
@@ -105,20 +87,14 @@
   --color-neo-on-accent: var(--neo-on-accent);
   --color-neo-on-primary: var(--neo-on-primary);
 
-  /* hard offset shadows + crisp radius → shadow-neo / shadow-neo-lg / rounded-neo
-     ELEVATION DISCIPLINE (use by role, not by vibe):
-       sm  → passive chips: badges, the live ticker, toasts.
-       neo → interactive controls: buttons, inputs, standard cards.
-       lg  → the ONE hero object per band (the live-$ card, the cartogram frame),
-             which also gets border-4 (everything else stays border-2). */
-  --shadow-neo: 4px 4px 0 0 #cbd5e3;
-  --shadow-neo-lg: 7px 7px 0 0 #cbd5e3;
-  --shadow-neo-sm: 2px 2px 0 0 #cbd5e3;
-  /* white variants — boxes/buttons on the black sections (black shadows vanish on black) */
-  --shadow-neo-white: 4px 4px 0 0 #fff;
-  --shadow-neo-lg-white: 7px 7px 0 0 #fff;
-  --shadow-neo-sm-white: 2px 2px 0 0 #fff;
-  --radius-neo: 12px;
+  /* sleek shadows and radius */
+  --shadow-neo: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-neo-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-neo-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-neo-white: var(--shadow-neo);
+  --shadow-neo-lg-white: var(--shadow-neo-lg);
+  --shadow-neo-sm-white: var(--shadow-neo-sm);
+  --radius-neo: 8px;
 }
 
 html {
@@ -127,17 +103,9 @@ html {
   font-family: var(--sans);
 }
 
-/* Dark ambient background for the legacy app pages. The landing paints its own
-   full-bleed colour-field bands over this. */
 body {
+  background: var(--bg);
   color: var(--text);
-  background:
-    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(170, 59, 255, 0.22), transparent 70%),
-    radial-gradient(ellipse 70% 50% at 90% 10%, rgba(99, 102, 241, 0.14), transparent 65%),
-    radial-gradient(ellipse 90% 70% at 10% 100%, rgba(192, 132, 252, 0.12), transparent 70%),
-    linear-gradient(180deg, #0c0a12 0%, #100b1a 55%, #0a0810 100%);
-  background-attachment: fixed;
-  background-repeat: no-repeat;
 }
 
 /* Default link colour for the legacy app. Scoped to @layer base so Tailwind

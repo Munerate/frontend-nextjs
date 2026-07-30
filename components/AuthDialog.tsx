@@ -1,19 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSupabaseClient } from "@/lib/supabase/client";
 import { track, clientIdentify } from "@/lib/track";
 import Brand from "@/components/Brand";
+import { X } from "lucide-react";
 
-// Categorise the post-login destination without leaking the raw next URL.
 function nextKind(next: string): "sites" | "sites_new" | "other" {
   if (next.startsWith("/sites/new") || next.includes("mode=new")) return "sites_new";
   if (next.startsWith("/sites")) return "sites";
   return "other";
 }
 
-// Best-effort short code from an auth error message (never the raw message).
 function authErrorCode(message: string | undefined): string {
   const m = (message ?? "").toLowerCase();
   if (m.includes("rate") || m.includes("too many")) return "rate_limited";
@@ -23,11 +23,7 @@ function authErrorCode(message: string | undefined): string {
   return "unknown";
 }
 
-// Passwordless auth. Step 1: enter email → Supabase sends an email with both a
-// magic link and a code. Step 2: type the code → verifyOtp signs you in.
-// (The magic link still works too and lands on /auth/callback.) This mirrors the
-// Claim flow in EmailCapture, which relies on the link to carry site context.
-export default function LoginForm() {
+export default function AuthDialog({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/sites";
@@ -37,13 +33,14 @@ export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(() => {
-    const err = params.get("error");
-    if (!err) return null;
-    return err === "missing_code"
-      ? "That link was invalid or expired. Enter your email to get a fresh code."
-      : err;
-  });
+  const [msg, setMsg] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   async function sendCode(e: React.FormEvent) {
     e.preventDefault();
@@ -55,8 +52,6 @@ export default function LoginForm() {
     const emailRedirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
-      // flow: "login" is surfaced as {{ .Data.flow }} in the email template so
-      // the confirm-signup email shows the OTP code (this form has a paste UI).
       options: { shouldCreateUser: true, emailRedirectTo, data: { flow: "login" } },
     });
     setBusy(false);
@@ -77,9 +72,6 @@ export default function LoginForm() {
     const supabase = getSupabaseClient();
     const addr = email.trim().toLowerCase();
     const token = code.trim();
-    // Returning users get an "email" (magic link) OTP; brand-new users get a
-    // "signup" OTP from the confirm-signup template. We don't know which the
-    // address is, so try "email" first and fall back to "signup".
     let { error } = await supabase.auth.verifyOtp({ email: addr, token, type: "email" });
     if (error) {
       ({ error } = await supabase.auth.verifyOtp({ email: addr, token, type: "signup" }));
@@ -91,40 +83,46 @@ export default function LoginForm() {
       return;
     }
     await clientIdentify(supabase, { next_kind, otp_type: "code" });
-    router.replace(next);
+    onClose();
+    router.push(next);
     router.refresh();
   }
 
   const inputClass =
-    "font-text rounded-neo border-2 border-neo-frame bg-neo-canvas px-3 py-2 text-sm text-neo-ink outline-none transition-colors placeholder:text-neo-ink/40 focus:border-neo-main";
+    "w-full rounded-md border border-neo-line bg-white px-3 py-2 text-sm text-neo-ink outline-none transition-colors placeholder:text-gray-400 focus:border-neo-main focus:ring-1 focus:ring-neo-main";
   const buttonClass =
-    "font-display rounded-neo border-2 border-neo-frame bg-neo-main px-3 py-2.5 text-sm font-extrabold uppercase tracking-tight text-neo-on-primary shadow-neo transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 disabled:translate-x-0 disabled:translate-y-0 disabled:opacity-60";
+    "w-full rounded-md bg-neo-main px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-black/80 disabled:opacity-50 disabled:cursor-not-allowed";
 
-  return (
-    <main className="relative isolate flex flex-1 items-center justify-center overflow-hidden bg-neo-canvas p-6 text-neo-ink">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 -z-10 bg-linear-to-b from-black/40 via-transparent to-black/50"
-      />
-      <div className="w-full max-w-sm rounded-neo border-4 border-neo-frame bg-neo-card p-7 shadow-neo-lg">
-        <Brand size="lg" tileFill="var(--field-a)" barFill="#ffffff" />
-        <h1 className="font-display mt-5 text-2xl font-extrabold uppercase leading-[0.95] tracking-tight">
+  const dialogContent = (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+      <div className="relative w-full max-w-sm rounded-xl border border-neo-line bg-white p-6 shadow-xl">
+        <button
+          onClick={onClose}
+          className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          <X className="h-5 w-5" />
+        </button>
+        
+        <div className="mb-6 flex justify-center">
+          <Brand size="md" className="text-neo-ink" />
+        </div>
+
+        <h2 className="text-center text-xl font-bold text-neo-ink">
           {step === "email" ? "Sign in" : "Enter your code"}
-        </h1>
-        <p className="font-text mt-1 mb-6 text-sm font-medium text-neo-ink/60">
+        </h2>
+        
+        <p className="mt-2 mb-6 text-center text-sm text-gray-500">
           {step === "email" ? (
             "We'll email you a one-time code — no password needed."
           ) : (
             <>
-              We sent a code to{" "}
-              <span className="font-bold text-neo-ink">{email.trim()}</span>. Enter
-              it below to sign in.
+              We sent a code to <span className="font-semibold text-neo-ink">{email.trim()}</span>.
             </>
           )}
         </p>
 
         {step === "email" ? (
-          <form onSubmit={sendCode} className="flex flex-col gap-3">
+          <form onSubmit={sendCode} className="flex flex-col gap-4">
             <input
               type="email"
               required
@@ -135,11 +133,11 @@ export default function LoginForm() {
               className={inputClass}
             />
             <button type="submit" disabled={busy} className={buttonClass}>
-              {busy ? "…" : "Send code"}
+              {busy ? "Sending..." : "Send code"}
             </button>
           </form>
         ) : (
-          <form onSubmit={verifyCode} className="flex flex-col gap-3">
+          <form onSubmit={verifyCode} className="flex flex-col gap-4">
             <input
               type="text"
               required
@@ -153,28 +151,29 @@ export default function LoginForm() {
               className={`${inputClass} text-center text-lg tracking-[0.5em]`}
             />
             <button type="submit" disabled={busy} className={buttonClass}>
-              {busy ? "…" : "Verify & sign in"}
+              {busy ? "Verifying..." : "Verify & sign in"}
             </button>
           </form>
         )}
 
-        {msg && <p className="font-text mt-3 text-sm text-neo-ink/80">{msg}</p>}
+        {msg && <p className="mt-4 text-center text-sm text-red-500">{msg}</p>}
 
-        <button
-          onClick={() => {
-            if (step === "code") {
+        {step === "code" && (
+          <button
+            onClick={() => {
               track("login_use_different_email", { next_kind });
               setStep("email");
               setCode("");
               setMsg(null);
-            }
-          }}
-          disabled={step === "email"}
-          className="font-text mx-auto mt-4 block text-sm font-semibold text-gray-500 transition-colors hover:text-gray-700 disabled:opacity-0"
-        >
-          Use a different email
-        </button>
+            }}
+            className="mx-auto mt-4 block text-sm font-medium text-gray-400 transition-colors hover:text-gray-600"
+          >
+            Use a different email
+          </button>
+        )}
       </div>
-    </main>
+    </div>
   );
+
+  return createPortal(dialogContent, document.body);
 }

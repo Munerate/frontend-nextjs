@@ -6,6 +6,8 @@ import { getSupabaseServer, getSupabaseAdmin } from "@/lib/supabase/server";
 import { buildInstallEmail } from "@/lib/install-email";
 import { sendMail } from "@/lib/mailer";
 import { logServerEvent } from "@/lib/track-server";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -243,6 +245,23 @@ export async function sendInstallEmail(siteId: string): Promise<void> {
   } catch (err) {
     console.error("Failed to send install email:", err);
   }
+}
+
+export async function deleteSite(siteId: string): Promise<{ error?: string }> {
+  const supabase = await getSupabaseServer();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" };
+
+  const { error } = await supabase
+    .from("sites")
+    .delete()
+    .eq("id", siteId)
+    .eq("owner_id", user.id);
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/sites");
+  redirect("/sites");
 }
 
 

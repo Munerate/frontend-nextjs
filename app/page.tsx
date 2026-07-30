@@ -1,10 +1,9 @@
 import Link from "next/link";
 import Brand from "@/components/Brand";
-import LandingDashboard from "@/components/LandingDashboard";
-import { Button } from "@/components/ui/button";
-import { getValuations } from "@/lib/valuations";
-import { generateBacklog } from "@/lib/demo-traffic";
+import LandingForm from "@/components/LandingForm";
 import { getSupabaseServer } from "@/lib/supabase/server";
+import HeaderAuth from "@/components/HeaderAuth";
+import FlowchartAnimation from "@/components/FlowchartAnimation";
 
 export default async function Home() {
   const supabase = await getSupabaseServer();
@@ -12,59 +11,47 @@ export default async function Home() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { rows: valuations, fetchedAt } = await getValuations();
-  const backlog = generateBacklog(600);
-
   return (
-    <main className="flex flex-1 flex-col bg-neo-canvas text-neo-ink">
-      {/* Top bar — dark translucent sticky bar with a hairline; blue wordmark tile, white bars */}
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-black/20 px-6 py-4 text-white backdrop-blur-md sm:px-10 md:py-5">
+    <main className="flex min-h-screen flex-col bg-white text-gray-900">
+      {/* Top bar — clean white sticky header */}
+      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/80 px-6 py-4 backdrop-blur-md sm:px-10 md:py-5">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
           <Brand
             href="/"
             size="lg"
-            className="text-white"
+            className="text-gray-900"
             tile
-            tileFill="var(--field-a)"
-            barFill="var(--neo-on-primary)"
+            tileFill="#000000"
+            barFill="#ffffff"
           />
-          <div className="flex items-center gap-3">
-            <Button
-              asChild
-              variant="ghost"
-              size="sm"
-              className="text-white/70 hover:bg-white/10 hover:text-white"
-            >
-              <Link href="/investors">Investors</Link>
-            </Button>
-            <Button asChild variant="neutral" size="sm">
-              <Link href={user ? "/sites" : "/login"}>
-                {user ? "Dashboard" : "Sign in"}
-              </Link>
-            </Button>
+          <div className="flex items-center gap-4">
+            <HeaderAuth user={user} />
           </div>
         </div>
       </header>
 
-      {/* The dashboard-as-landing (colour-field bands) */}
-      <LandingDashboard
-        valuations={valuations}
-        fetchedAt={fetchedAt}
-        backlog={backlog}
-      />
+      {/* Main minimal hero section */}
+      <div className="flex items-center justify-center px-6 py-20 sm:px-10">
+        <LandingForm user={user} />
+      </div>
 
-      <footer className="border-t border-neo-line bg-neo-canvas px-6 py-8 text-neo-ink sm:px-10">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-3 sm:flex-row sm:justify-between">
+      {/* What you get Flowchart */}
+      <div className="flex flex-col items-center justify-center px-6 pb-20 sm:px-10">
+        <FlowchartAnimation />
+      </div>
+
+      <footer className="border-t border-gray-100 bg-white px-6 py-8 text-gray-500 sm:px-10">
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-4 sm:flex-row sm:justify-between">
           <Brand
             href="/"
             size="sm"
-            className="text-neo-ink"
+            className="text-gray-900 opacity-70 grayscale"
             tile
-            tileFill="var(--field-a)"
-            barFill="var(--neo-on-primary)"
+            tileFill="#000000"
+            barFill="#ffffff"
           />
-          <span className="font-text text-xs font-medium text-neo-ink/50">
-            © {2026} Munerate
+          <span className="text-xs font-medium">
+            © {2026} AI Traffic Lens
           </span>
         </div>
       </footer>

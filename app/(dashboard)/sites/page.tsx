@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getSupabaseServer, getSupabaseAdmin } from "@/lib/supabase/server";
+import { getSupabaseServer } from "@/lib/supabase/server";
 import AddDomainDialog from "@/components/AddDomainDialog";
 
 export const runtime = "nodejs";
@@ -32,7 +32,7 @@ export default async function SitesIndexPage(props: {
   const searchParams = await props.searchParams;
   const modeParam = searchParams?.mode;
 
-  const supabase = getSupabaseAdmin();
+  const supabase = await getSupabaseServer();
   const { data: sites } = await supabase
     .from("sites")
     .select("id, domain, created_at")
